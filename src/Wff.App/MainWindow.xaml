@@ -1,0 +1,52 @@
+﻿<Window x:Class="Wff.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="win-fast-finder" Width="680"
+        SizeToContent="Height" MinHeight="70" MaxHeight="520"
+        WindowStyle="None" Topmost="True" ShowInTaskbar="False"
+        WindowStartupLocation="Manual"
+        Visibility="Hidden"
+        Icon="{DynamicResource AppLogo}"
+        Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+        Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}">
+    <Window.Resources>
+    </Window.Resources>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" MaxHeight="320"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <TextBox x:Name="QueryBox" FontSize="18" Padding="8,8,40,8"
+                     TextChanged="QueryBox_TextChanged" KeyDown="QueryBox_KeyDown"
+                     PreviewKeyDown="QueryBox_PreviewKeyDown"/>
+            <TextBlock x:Name="Placeholder" FontSize="18" Padding="10,8,40,8"
+                       Text="Search anything in your computer…" Opacity="0.45"
+                       IsHitTestVisible="False" VerticalAlignment="Center"/>
+            <Button x:Name="GearButton" Width="30" Height="30" Padding="0"
+                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0"
+                    Background="Transparent" BorderThickness="0" Opacity="0.75"
+                    ToolTip="Settings" Click="GearButton_Click">
+                <TextBlock Text="&#x2699;" FontFamily="Segoe UI Symbol" FontSize="17"
+                           Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Button>
+        </Grid>
+        <TextBlock x:Name="HintBar" Grid.Row="1" Margin="2,4,2,2" FontSize="11"
+                   Opacity="0.6" Visibility="Collapsed"
+                   Text="*.pdf   ext:pdf   size:&gt;1mb   dm:&lt;7d   — Tab completes directives"/>
+        <ListBox x:Name="Hits" Grid.Row="2" FontSize="13" Margin="0,4,0,0" MaxHeight="300"
+                 Visibility="Collapsed"
+                 VirtualizingStackPanel.IsVirtualizing="True"
+                 VirtualizingStackPanel.VirtualizationMode="Recycling"
+                 MouseDoubleClick="Hits_DoubleClick"/>
+        <DockPanel x:Name="BottomBar" Grid.Row="3" LastChildFill="False" Margin="0,4,0,0"
+                   Visibility="Collapsed">
+            <TextBlock x:Name="Status" DockPanel.Dock="Left" Opacity="0.6" Text="starting…"/>
+            <Button Content="Resync" DockPanel.Dock="Right" Click="Resync_Click" Padding="10,0" Margin="0,0,8,0"/>
+            <Button Content="Settings" DockPanel.Dock="Right" Click="Settings_Click" Padding="10,0"/>
+        </DockPanel>
+    </Grid>
+</Window>

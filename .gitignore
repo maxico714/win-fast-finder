@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+*.user
+TestResults/
+.agent/
+dist/
+*.zip
+*.sha256

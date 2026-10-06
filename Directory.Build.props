@@ -1,0 +1,27 @@
+<Project>
+
+  <!-- Single source of truth for version + package metadata.
+       Every project under src/ and tests/ inherits these. -->
+  <PropertyGroup>
+    <Version>1.0.1</Version>
+    <Authors>Rehan Khan</Authors>
+    <Company>Rehan Khan</Company>
+    <Product>win-fast-finder</Product>
+    <Copyright>Copyright (c) 2026 Rehan Khan</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/maxico714/win-fast-finder</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/maxico714/win-fast-finder</PackageProjectUrl>
+    <PackageTags>windows;search;filename;fuzzy;hotkey;wpf</PackageTags>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

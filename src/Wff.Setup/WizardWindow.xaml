@@ -1,0 +1,62 @@
+<Window x:Class="Wff.Setup.WizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="win-fast-finder setup" Height="440" Width="560"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel x:Name="PageWelcome" Grid.Row="0" VerticalAlignment="Center">
+            <TextBlock Text="win-fast-finder 1.0.0" FontSize="24" FontWeight="Bold"/>
+            <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Opacity="0.75"
+                       Text="Instant offline filename search for Windows. This wizard installs the app, adds a Start Menu shortcut, registers it for clean uninstall, and enables launch at login (you can opt out later in Settings)."/>
+        </StackPanel>
+
+        <DockPanel x:Name="PageLicense" Grid.Row="0" Visibility="Collapsed">
+            <CheckBox x:Name="AcceptBox" DockPanel.Dock="Bottom" Margin="0,8,0,0"
+                      Content="I accept the terms (MIT License)" Checked="Accept_Changed" Unchecked="Accept_Changed"/>
+            <TextBox x:Name="LicenseBox" IsReadOnly="True" VerticalScrollBarVisibility="Auto"
+                     FontFamily="Consolas" FontSize="11" TextWrapping="Wrap"/>
+        </DockPanel>
+
+        <StackPanel x:Name="PageDirectory" Grid.Row="0" Visibility="Collapsed" VerticalAlignment="Center">
+            <TextBlock Text="Where should it live?" FontSize="18" FontWeight="Bold"/>
+            <TextBlock Margin="0,4,0,0" Opacity="0.75" Text="Default is Program Files. Pick any folder — it will be created."/>
+            <DockPanel Margin="0,10,0,0">
+                <Button Content="Browse…" Click="Browse_Click" Padding="12,2" DockPanel.Dock="Right" Margin="8,0,0,0"/>
+                <TextBox x:Name="DirBox" Padding="4" TextChanged="DirBox_Changed"/>
+            </DockPanel>
+            <TextBlock x:Name="DirError" Foreground="Red" Visibility="Collapsed" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <StackPanel x:Name="PageProgress" Grid.Row="0" Visibility="Collapsed" VerticalAlignment="Center">
+            <TextBlock x:Name="ProgressLabel" Text="Installing…" FontSize="18" FontWeight="Bold"/>
+            <ProgressBar Height="16" Margin="0,10,0,0" IsIndeterminate="True"/>
+            <ListBox x:Name="ProgressLog" Height="180" Margin="0,10,0,0"/>
+        </StackPanel>
+
+        <StackPanel x:Name="PageFinish" Grid.Row="0" Visibility="Collapsed" VerticalAlignment="Center">
+            <TextBlock x:Name="FinishText" Text="Ready." FontSize="18" FontWeight="Bold"/>
+            <CheckBox x:Name="LaunchBox" Margin="0,10,0,0" Content="Launch win-fast-finder now" IsChecked="True"/>
+        </StackPanel>
+
+        <StackPanel x:Name="PageBlocked" Grid.Row="0" Visibility="Collapsed" VerticalAlignment="Center">
+            <TextBlock Text="Microsoft .NET 8 Desktop Runtime is missing" FontSize="18" FontWeight="Bold" Foreground="Red"/>
+            <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Opacity="0.85"
+                       Text="This app needs the free Microsoft .NET 8 Desktop Runtime first. Install it, then come back and press Recheck."/>
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Content="Open download page" Click="Download_Click" Padding="12,2" Margin="0,0,8,0"/>
+                <Button Content="Recheck" Click="Recheck_Click" Padding="12,2"/>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button x:Name="BackBtn" Content="‹ Back" Click="Back_Click" Padding="14,2" Margin="0,0,8,0" IsEnabled="False"/>
+            <Button x:Name="NextBtn" Content="Next ›" Click="Next_Click" Padding="14,2" Margin="0,0,8,0" IsDefault="True"/>
+            <Button Content="Cancel" Padding="14,2" IsCancel="True" Click="Cancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
