@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/maxico714/win-fast-finder/security/advisories/new
+    about: Please do NOT open a public issue for a security vulnerability. Use a private advisory instead.
+  - name: Troubleshooting guide
+    url: https://github.com/maxico714/win-fast-finder/blob/main/docs/TROUBLESHOOTING.md
+    about: Hotkey not working, empty search results, SmartScreen warnings, runtime missing — check here first.
+  - name: Usage reference
+    url: https://github.com/maxico714/win-fast-finder/blob/main/docs/USAGE.md
+    about: Complete query syntax, shortcuts and settings reference.
+  - name: Email the maintainer
+    url: mailto:rekhan123451@live.com
+    about: Contact Rehan Khan directly.

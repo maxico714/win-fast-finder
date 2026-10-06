@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & test
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore Wff.sln
+
+      - name: Build (no incremental — full recompile)
+        run: dotnet build Wff.sln --no-incremental --configuration Release
+
+      - name: Test
+        run: dotnet test tests/Wff.Tests/Wff.Tests.csproj --no-build --configuration Release --logger "console;verbosity=normal"
+
+      - name: Publish app (framework-dependent)
+        run: dotnet publish src/Wff.App/Wff.App.csproj -c Release -o dist/win-fx -p:PublishSingleFile=true -p:SelfContained=false
+
+      - name: Publish setup
+        run: dotnet publish src/Wff.Setup/Wff.Setup.csproj -c Release -o dist/setup-fx -p:SelfContained=false
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-fast-finder-build
+          path: dist/
+          retention-days: 7

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>win-fast-finder logo: magnifier with lightning bolt</title>
+  <!-- lens -->
+  <circle cx="27" cy="27" r="17" fill="none" stroke="#0EA5E9" stroke-width="6"/>
+  <!-- handle -->
+  <line x1="39" y1="39" x2="54" y2="54" stroke="#0EA5E9" stroke-width="7" stroke-linecap="round"/>
+  <!-- bolt -->
+  <polygon points="30,15 20,33 27,33 24,43 35,27 28,27" fill="#FFB900"/>
+</svg>

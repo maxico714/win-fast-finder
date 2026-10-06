@@ -1,0 +1,62 @@
+name: Feature request
+description: Suggest something win-fast-finder could do better
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the **problem** you're solving, not just the solution you have in mind —
+        that helps decide whether it belongs in scope.
+
+        Out of scope by design: file **content** search, any network/cloud feature,
+        non-Windows platforms, paid tiers. See [docs/ROADMAP.md](../blob/main/docs/ROADMAP.md).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Be concrete. What were you doing, and what got in the way?
+      placeholder: |
+        I work across three drives and reorganise folders weekly. Every time I
+        move a project I lose track of where files ended up, and I have to
+        remember the folder structure to find them again.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to happen?
+      description: Optional — if you have an idea for a solution, describe it here.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often do you hit this?
+      options:
+        - Every day
+        - Several times a week
+        - Occasionally
+        - Rarely
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Other tools, workarounds, or settings changes you've tried.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      description: Please confirm this fits the project's direction.
+      options:
+        - label: This doesn't require file content search, network access, or admin rights.
+          required: true

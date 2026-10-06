@@ -1,0 +1,82 @@
+name: Bug report
+description: Something isn't working as documented
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. **Please include the log file** — it answers most questions:
+        `%APPDATA%\win-fast-finder\log.txt`
+
+        For security issues, do **not** use this form — see [SECURITY.md](../blob/main/SECURITY.md).
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Run `winver` and report what it says.
+      placeholder: "Windows 11 Pro 23H2 (build 22631)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install?
+      options:
+        - Released installer (win-fast-finder-Setup-x.y.z.exe)
+        - Built from source
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: win-fast-finder version
+      placeholder: "1.0.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log file
+      description: |
+        Paste the **entire** contents of `%APPDATA%\win-fast-finder\log.txt`.
+        This is the single most useful thing you can attach.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Launch win-fast-finder
+        2. Press Ctrl+Shift+F
+        3. Type 'invoice'
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Screenshots, antivirus software in use, other apps that might hold the hotkey, etc.
