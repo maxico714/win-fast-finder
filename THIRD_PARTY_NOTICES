@@ -1,0 +1,44 @@
+# Third-party notices
+
+## Runtime dependencies
+
+**None.**
+
+The shipped application (`Wff.App`, `Wff.Engine`) uses only the
+.NET 8 base class library and Windows API surface via P/Invoke
+(`user32.dll` for `RegisterHotKey`, `GetWindowRect`, `GetForegroundWindow`,
+`GetWindowLong`, and the optional `WH_KEYBOARD_LL` hook). There are **no
+NuGet package references** in any shipped project.
+
+## .NET runtime
+
+This project is published **framework-dependent**: it does not bundle or
+redistribute the .NET runtime. Users install
+[.NET 8 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+themselves from Microsoft, under Microsoft's own terms. win-fast-finder is not
+affiliated with, endorsed by, or sponsored by Microsoft.
+
+## Development-only packages
+
+The following packages are referenced by `tests/Wff.Tests` only. They are
+**not** part of any released artifact, installer, or installed product.
+
+| Package | Version | Licence |
+|---|---|---|
+| [xunit](https://github.com/xunit/xunit) | 2.5.3 | MIT |
+| [xunit.runner.visualstudio](https://github.com/xunit/xunit) | 2.5.3 | MIT |
+| [Microsoft.NET.Test.Sdk](https://github.com/microsoft/vstest) | 17.8.0 | MIT |
+| [coverlet.collector](https://github.com/coverlet-coverage/coverlet) | 6.0.0 | MIT |
+
+## Assets
+
+| Asset | Origin |
+|---|---|
+| `assets/logo.svg` | Original work for this project (magnifier + lightning bolt) |
+| `docs/assets/screenshot.png` | Captured from a live run of this application |
+
+## Code of Conduct
+
+`CODE_OF_CONDUCT.md` adapts the
+[Contributor Covenant](https://www.contributor-covenant.org) v2.1, used under
+its own licence terms.
