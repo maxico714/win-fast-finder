@@ -124,6 +124,9 @@ Set-Content -LiteralPath $hashFile -Value "$hash  $(Split-Path $setupExe -Leaf)"
 Write-Host "sha256:   $hash"
 
 # --- 8: source zip ----------------------------------------------------------
+# Prefer `git ls-files` (exactly what a contributor gets on clone). Fall back
+# to a filtered walk when git is unavailable. Never copy bin/obj — copying
+# them and deleting afterwards is what made this step crawl.
 $sourceZip = Join-Path $dist "win-fast-finder-$version-source.zip"
 if (Test-Path $sourceZip) { Remove-Item $sourceZip -Force }
 
@@ -131,21 +134,42 @@ $staging = Join-Path $env:TEMP 'wff-source'
 if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
 New-Item -ItemType Directory -Path $staging -Force | Out-Null
 
-$excludeDirs = @('bin', 'obj', 'dist', '.git', '.vs', '.agent', 'TestResults')
-foreach ($item in Get-ChildItem -LiteralPath $root) {
-    if ($item.Name -in $excludeDirs) { continue }
-    if ($item.Name -eq 'Wff.sln' -or $item.Name -like '*.md' -or
-        $item.Name -in @('.gitignore', '.editorconfig', 'global.json', 'Directory.Build.props', 'LICENSE', 'THIRD_PARTY_NOTICES')) {
-        Copy-Item $item.FullName (Join-Path $staging $item.Name) -Recurse -Force
-        continue
-    }
-    if ($item.PSIsContainer) {
-        Copy-Item $item.FullName (Join-Path $staging $item.Name) -Recurse -Force
-        Get-ChildItem (Join-Path $staging $item.Name) -Recurse -Directory |
-            Where-Object { $excludeDirs -contains $_.Name } |
-            ForEach-Object { Remove-Item $_.FullName -Recurse -Force }
+$gitExe = (Get-Command git -ErrorAction SilentlyContinue).Source
+if (-not $gitExe) {
+    foreach ($c in @('C:\Program Files\Git\cmd\git.exe', "$env:LOCALAPPDATA\Programs\Git\cmd\git.exe")) {
+        if (Test-Path $c) { $gitExe = $c; break }
     }
 }
+
+$excludePattern = '(?i)(^|/)(bin|obj|dist|\.git|\.vs|\.agent|TestResults)(/|$)'
+if ($gitExe) {
+    $files = & $gitExe -C $root ls-files
+    if ($LASTEXITCODE -eq 0 -and $files) {
+        Write-Host "source: collecting via git ls-files ($($files.Count) files)"
+        foreach ($rel in $files) {
+            if ($rel -match $excludePattern) { continue }
+            $src = Join-Path $root ($rel -replace '/', '\')
+            if (-not (Test-Path -LiteralPath $src)) { continue }
+            $dst = Join-Path $staging ($rel -replace '/', '\')
+            $dstDir = Split-Path $dst -Parent
+            if (-not (Test-Path -LiteralPath $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+            Copy-Item -LiteralPath $src -Destination $dst -Force
+        }
+    }
+}
+
+if (-not (Get-ChildItem $staging -Force -ErrorAction SilentlyContinue)) {
+    Write-Host 'source: git unavailable, using filtered walk'
+    Get-ChildItem -LiteralPath $root -Force |
+        Where-Object { $excludePattern -notmatch $_.Name -and $_.Name -notmatch '^(bin|obj|dist|\.git|\.vs|\.agent|TestResults)$' } |
+        ForEach-Object {
+            Copy-Item $_.FullName (Join-Path $staging $_.Name) -Recurse -Force
+        }
+    Get-ChildItem $staging -Recurse -Directory |
+        Where-Object { $_.Name -match '^(bin|obj|dist|\.git|\.vs|\.agent|TestResults)$' } |
+        ForEach-Object { Remove-Item $_.FullName -Recurse -Force }
+}
+
 Compress-Archive -Path (Join-Path $staging '*') -DestinationPath $sourceZip -Force
 $srcHash = (Get-FileHash $sourceZip -Algorithm SHA256).Hash
 Set-Content -LiteralPath "$sourceZip.sha256" -Value "$srcHash  $(Split-Path $sourceZip -Leaf)" -Encoding ascii -NoNewline
