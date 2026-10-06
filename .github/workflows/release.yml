@@ -37,18 +37,22 @@ jobs:
         id: changelog
         shell: pwsh
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = "${{ github.ref_name }}".TrimStart('v')
           $content = Get-Content CHANGELOG.md -Raw
-          # Match "## [1.0.1] - date" or "## [1.0.1]" through the next "## "
-          $pattern = "(?ms)^## \[\Q$($tag.TrimStart('v'))\E\][^\r\n]*\r?\n(.*?)(?=^## |\z)"
+          # .NET regex - use [regex]::Escape(), NOT Perl's \Q...\E
+          $ver = [regex]::Escape($tag)
+          $pattern = "(?ms)^## \[$ver\][^\r\n]*\r?\n(.*?)(?=^## |\z)"
           $m = [regex]::Match($content, $pattern)
-          $body = if ($m.Success -and $m.Groups[1].Value.Trim()) { $m.Groups[1].Value.Trim() } else { "Release $tag — see CHANGELOG.md for details." }
-          $body = "win-fast-finder $tag`n`n$body"
-          # Delimiter unlikely to appear in the changelog
+          if ($m.Success -and $m.Groups[1].Value.Trim()) {
+            $section = $m.Groups[1].Value.Trim()
+          } else {
+            $section = "Release v$tag - see CHANGELOG.md for details."
+          }
+          $body = "win-fast-finder v$tag`n`n$section"
           $delim = '___WFF_RELEASE_BODY___'
-          "body<<$delim" >> $env:GITHUB_OUTPUT
-          $body >> $env:GITHUB_OUTPUT
-          "$delim" >> $env:GITHUB_OUTPUT
+          "body<<$delim" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          $body   | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          $delim  | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
