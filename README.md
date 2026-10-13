@@ -1,15 +1,28 @@
-# win-fast-finder
+# win-fast-finder — Fast Offline File Search for Windows
 
 [![CI](https://github.com/maxico714/win-fast-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/maxico714/win-fast-finder/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/maxico714/win-fast-finder.svg)](https://github.com/maxico714/win-fast-finder/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4.svg)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 
-One hotkey. Instant offline filename search on Windows.
+**win-fast-finder** is a lightweight, open-source **file search tool for
+Windows** that finds files *by name* — instantly, offline, from one global
+keyboard shortcut. Built with C# and .NET 8, it keeps an in-memory index of
+filenames so a query returns in milliseconds instead of waiting on the
+Windows Search service.
 
-`win-fast-finder` finds files **by name only** — never their contents — using a
-zero-dependency in-memory index. No Windows Search service, no cloud, no
-telemetry, no admin rights.
+- **Fast file search for Windows** — typically single-digit millisecond
+  queries across hundreds of thousands of indexed filenames
+- **Offline filename search** — no cloud, no network calls, no telemetry,
+  no admin rights
+- **Lightweight** — ~240 KB app with zero third-party runtime dependencies
+- **Open source** — MIT-licensed C#/.NET 8 code you can read, build and modify
+
+It searches **file names only, never file contents**. Windows 10 and
+Windows 11, x64.
+
+[Download the latest release](https://github.com/maxico714/win-fast-finder/releases)
+· [Build from source](#build-from-source) · [Query syntax](#query-syntax)
 
 ![win-fast-finder popup showing results for "readme"](docs/assets/screenshot.png)
 
@@ -21,6 +34,7 @@ telemetry, no admin rights.
 ## Table of contents
 
 - [Why](#why)
+  - [How it compares](#how-it-compares)
 - [Requirements](#requirements)
 - [Install](#install)
 - [Quickstart](#quickstart)
@@ -31,6 +45,7 @@ telemetry, no admin rights.
 - [Privacy](#privacy)
 - [Troubleshooting](#troubleshooting)
 - [Build from source](#build-from-source)
+- [FAQ](#faq)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [Credits](#credits)
@@ -51,6 +66,31 @@ closed-source or paywalled. This project exists to answer one question with
 - **Non-admin** — no kernel driver, no NTFS MFT reads, no services.
 - **Small** — a ~240 KB app plus a single runtime prerequisite.
 - **Honest** — every performance number below is reproducible from the README.
+
+### How it compares
+
+If you are looking for a **Windows Search alternative**, this is where
+win-fast-finder sits:
+
+| | Open source | Needs admin | Filename search | Query filters | Price |
+|---|---|---|---|---|---|
+| **win-fast-finder** | ✅ MIT | ❌ No | ✅ Fuzzy + glob | `ext:` `size:` `dm:` `path:` | Free |
+| Windows Search | — | No | Partial, index-dependent | Limited | Built in |
+| Everything | ❌ Closed | Optional (for USN journal) | ✅ Substring | Basic | Free / freeware |
+| Listary | ❌ Closed | No | ✅ Fuzzy | Pro features paid | Free tier / paid |
+
+Honest trade-offs, so you can decide:
+
+- **Raw cold-start speed:** NTFS-driver-based tools (Everything) win. They read
+  the MFT directly; win-fast-finder deliberately stays non-admin and portable,
+  so its *first* index walk takes longer. Warm starts are instant thanks to the
+  binary cache.
+- **Auditable code:** only win-fast-finder is fully MIT and inspectable.
+- **File contents:** neither — this is a filename index by design. Windows
+  Search *does* index contents, which is exactly why it is heavier and slower.
+
+Whatever you choose, the log at `%APPDATA%\win-fast-finder\log.txt` tells you
+exactly what happened — see [Troubleshooting](#troubleshooting).
 
 ## Requirements
 
@@ -235,6 +275,49 @@ To produce the installer:
 ```
 
 Details in [docs/BUILDING.md](docs/BUILDING.md).
+
+## FAQ
+
+**Does it search inside files?**
+No. win-fast-finder indexes **filenames only** — that is what makes it fast
+and what keeps it private. If you need file contents, Windows Search already
+does content indexing (which is why it is heavier).
+
+**Is it free? What's the catch?**
+Free, MIT-licensed, no paid tier, no account, no telemetry. The catch is
+honesty: the installer is not code-signed, so SmartScreen may warn you. See
+[Security](SECURITY.md).
+
+**Is it safe? Does anything leave my PC?**
+No — there is literally no network code in the project. Verify it yourself:
+```powershell
+Select-String -Path (Get-ChildItem src -Recurse -Include *.cs) `
+  -Pattern 'HttpClient|WebRequest|TcpClient|Socket\(|Dns\.'
+```
+Expected: empty output. Full details in [docs/PRIVACY.md](docs/PRIVACY.md).
+
+**Do I need administrator rights?**
+No. It reads ordinary directories — no kernel driver, no NTFS MFT access, no
+services. Only the installer elevates once, to write to `Program Files`.
+
+**How is it different from Everything?**
+Everything is closed-source and reads the NTFS MFT directly, so its *first*
+index is faster. win-fast-finder is fully open source and non-admin. Warm
+starts here are instant (binary cache), and queries are typically single-digit
+milliseconds. See [How it compares](#how-it-compares).
+
+**Which Windows versions are supported?**
+Windows 10 (1607+) and Windows 11, x64, with the
+[.NET 8 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+installed.
+
+**The hotkey does nothing.**
+Check `%APPDATA%\win-fast-finder\log.txt` for `registered=True`. Full
+walkthrough in [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+
+**Can I uninstall cleanly?**
+Yes — run `Uninstall.exe`, or use Windows Settings → Apps. It removes the app,
+data, shortcuts, autostart entry and registry keys.
 
 ## Documentation
 

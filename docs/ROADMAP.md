@@ -13,7 +13,7 @@ Core value is shipped and proven:
 - Borderless popup, System/Light/Dark themes, amber highlighting
 - Full settings surface, UAC installer, silent uninstall
 - 62 mutation-verified tests + synthetic-keypress E2E
-- Zero network code, zero runtime dependencies
+- Zero network code, zero third-party runtime dependencies
 
 ## Next — v1.1.x (stability and polish)
 
