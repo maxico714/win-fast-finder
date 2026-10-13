@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Win Fast Finder — Fast Offline File Search for Windows (Free, MIT)</title>
+<meta name="description" content="Lightweight open-source Windows app that finds files by name in milliseconds. Offline, no telemetry, Ctrl+Shift+F hotkey. Free MIT-licensed C#/.NET 8.">
+<meta name="keywords" content="fast file search for Windows, offline filename search, Windows Search alternative, lightweight file finder, filename search tool, fuzzy search, everything alternative, open source file search, win-fast-finder">
+<meta name="author" content="Rehan Khan">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+<link rel="canonical" href="https://maxico714.github.io/win-fast-finder/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Win Fast Finder">
+<meta property="og:title" content="Win Fast Finder — Fast Offline File Search for Windows">
+<meta property="og:description" content="Find any file by name in milliseconds. Offline, open source, zero telemetry, one global hotkey.">
+<meta property="og:url" content="https://maxico714.github.io/win-fast-finder/">
+<meta property="og:image" content="https://maxico714.github.io/win-fast-finder/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:locale" content="en_US">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Win Fast Finder — Fast Offline File Search for Windows">
+<meta name="twitter:description" content="Find any file by name in milliseconds. Offline, open source, zero telemetry, one global hotkey.">
+<meta name="twitter:image" content="https://maxico714.github.io/win-fast-finder/assets/social-preview.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Win Fast Finder",
+  "alternateName": "win-fast-finder",
+  "operatingSystem": "Windows 10, Windows 11",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "File Search",
+  "url": "https://maxico714.github.io/win-fast-finder/",
+  "downloadUrl": "https://github.com/maxico714/win-fast-finder/releases",
+  "softwareVersion": "1.0.1",
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Rehan Khan" },
+  "codeRepository": "https://github.com/maxico714/win-fast-finder",
+  "image": "https://maxico714.github.io/win-fast-finder/assets/social-preview.png",
+  "description": "A lightweight, open-source Windows desktop application that finds files by filename in milliseconds using an in-memory index. Offline, no telemetry, no admin rights."
+}
+</script>
+
+<style>
+  :root{
+    --ink:#f8fafc; --muted:#94a3b8; --bg:#0f172a; --panel:#1e293b;
+    --line:#334155; --accent:#0ea5e9; --amber:#ffb900;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--accent)}
+  a:hover{color:var(--amber)}
+  .wrap{max-width:900px;margin:0 auto;padding:0 24px}
+  header{padding:72px 0 40px;border-bottom:1px solid var(--line)}
+  h1{font-size:2.6rem;line-height:1.15;margin:0 0 14px}
+  h1 .brand{color:var(--accent)}
+  h2{font-size:1.5rem;margin:44px 0 12px}
+  .tagline{font-size:1.18rem;color:var(--amber);margin:0 0 22px}
+  .lead{font-size:1.06rem;color:var(--muted);margin:0 0 26px;max-width:62ch}
+  .cta{display:flex;gap:14px;flex-wrap:wrap}
+  .btn{display:inline-block;padding:13px 24px;border-radius:8px;text-decoration:none;
+    font-weight:600;font-size:1rem;transition:.15s}
+  .btn-primary{background:var(--accent);color:#04121c}
+  .btn-primary:hover{background:var(--amber);color:#1a1200}
+  .btn-ghost{border:1px solid var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--amber);color:var(--amber)}
+  .shot{width:100%;border-radius:10px;border:1px solid var(--line);margin:34px 0 8px;display:block}
+  .caption{font-size:.86rem;color:var(--muted);text-align:center}
+  ul.grid{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:10px}
+  ul.grid li{padding:11px 14px;background:var(--panel);border:1px solid var(--line);
+    border-radius:8px}
+  ul.grid li b{color:var(--amber);font-weight:600}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem}
+  th,td{padding:10px 12px;border:1px solid var(--line);text-align:left}
+  th{background:var(--panel);color:var(--amber)}
+  code{background:var(--panel);border:1px solid var(--line);border-radius:5px;
+    padding:2px 7px;font-size:.92em}
+  kbd{background:var(--panel);border:1px solid var(--line);border-bottom-width:3px;
+    border-radius:6px;padding:3px 9px;font-size:.9em;font-family:inherit}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:20px 22px;margin:18px 0}
+  footer{border-top:1px solid var(--line);margin-top:56px;padding:30px 0 60px;
+    color:var(--muted);font-size:.92rem}
+  @media(max-width:640px){h1{font-size:1.9rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1><span class="brand">Win Fast Finder</span> — Fast Offline File Search for Windows</h1>
+    <p class="tagline">Any file, by name, in milliseconds — from one keyboard shortcut.</p>
+    <p class="lead">
+      A lightweight, open-source <strong>filename search tool for Windows&nbsp;10 and 11</strong>.
+      It keeps an in-memory index of your filenames so a query returns instantly, without
+      waiting on the Windows Search service. <strong>No cloud, no telemetry, no admin rights</strong>
+      — and it never searches inside file contents, which is exactly what keeps it fast and private.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/maxico714/win-fast-finder/releases">Download v1.0.1</a>
+      <a class="btn btn-ghost" href="https://github.com/maxico714/win-fast-finder">View source on GitHub</a>
+    </div>
+
+    <img class="shot" src="assets/screenshot.png"
+         alt="Win Fast Finder search popup showing live filename results for the query readme"
+         width="680" height="423" loading="eager">
+    <p class="caption">Real screenshot captured from a live run via synthetic <code>SendInput</code>.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <h2>Why it exists</h2>
+  <p>
+    Windows Search is slow and can miss files. Most popular alternatives are closed-source or
+    paywalled. Win Fast Finder answers one question — <em>where is that file?</em> — with
+    <strong>MIT-licensed, fully auditable code</strong>.
+  </p>
+  <ul class="grid">
+    <li><b>Fast</b> — typically single-digit millisecond queries over hundreds of thousands of cached names.</li>
+    <li><b>Offline &amp; private</b> — zero network code. The app cannot phone home because it has no code that does.</li>
+    <li><b>Non-admin</b> — no kernel driver, no NTFS MFT reads, no background services.</li>
+    <li><b>Tiny</b> — a ~240&nbsp;KB app plus a single runtime prerequisite. Zero third-party dependencies.</li>
+    <li><b>Honest</b> — every performance number published in the README is reproducible.</li>
+  </ul>
+
+  <h2>Query syntax</h2>
+  <p>Refine results without leaving the keyboard:</p>
+  <table>
+    <thead><tr><th>Input</th><th>Matches</th></tr></thead>
+    <tbody>
+      <tr><td><code>invoice 2024</code></td><td>Every term appears somewhere in the filename</td></tr>
+      <tr><td><code>ext:pdf</code></td><td>Filter by extension</td></tr>
+      <tr><td><code>size:&gt;10mb</code></td><td>Filter by size (<code>&lt;</code>, <code>&gt;</code>, ranges)</td></tr>
+      <tr><td><code>dm:&gt;7d</code></td><td>Modified within the last 7 days (<code>y</code>, <code>d</code>, <code>m</code>)</td></tr>
+      <tr><td><code>path:Downloads</code></td><td>Bare path token anywhere in the path</td></tr>
+      <tr><td><code>*.csproj</code></td><td>Glob-style pattern matching</td></tr>
+      <tr><td><code>report*.pdf</code></td><td>Combined glob + fuzzy</td></tr>
+    </tbody>
+  </table>
+  <p>Press <kbd>Tab</kbd> to auto-complete <code>ext:</code>, <code>size:</code> and <code>dm:</code>.
+     Full reference in the <a href="https://github.com/maxico714/win-fast-finder#query-syntax">README</a>.</p>
+
+  <h2>Default hotkeys</h2>
+  <table>
+    <thead><tr><th>Keys</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd></td><td>Show the search window from anywhere</td></tr>
+      <tr><td><kbd>Enter</kbd></td><td>Open the selected file</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Copy the full path</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Close</td></tr>
+    </tbody>
+  </table>
+
+  <h2>How it compares</h2>
+  <p>If you are looking for a <strong>Windows Search alternative</strong> or an
+     <strong>Everything alternative</strong>, here is an honest comparison:</p>
+  <table>
+    <thead><tr><th>&nbsp;</th><th>Open source</th><th>Needs admin</th><th>Query filters</th><th>Price</th></tr></thead>
+    <tbody>
+      <tr><td><b>Win Fast Finder</b></td><td>MIT</td><td>No</td><td><code>ext:</code> <code>size:</code> <code>dm:</code> <code>path:</code></td><td>Free</td></tr>
+      <tr><td>Windows Search</td><td>—</td><td>No</td><td>Limited</td><td>Built in</td></tr>
+      <tr><td>Everything</td><td>Closed</td><td>Optional</td><td>Basic</td><td>Freeware</td></tr>
+      <tr><td>Listary</td><td>Closed</td><td>No</td><td>Pro features paid</td><td>Free / paid</td></tr>
+    </tbody>
+  </table>
+  <div class="box">
+    <strong>Where other tools beat us:</strong> NTFS-driver-based tools read the Master File Table
+    directly, so their <em>first</em> index is faster. Win Fast Finder deliberately stays non-admin
+    and portable — warm starts are instant thanks to a binary cache, but a first index walk over a
+    huge tree takes longer. We would rather tell you that than hide it.
+  </div>
+
+  <h2>Install</h2>
+  <p>
+    Download <code>win-fast-finder-Setup-1.0.1.exe</code> from
+    <a href="https://github.com/maxico714/win-fast-finder/releases">GitHub Releases</a>,
+    verify the SHA-256, and run it. The installer checks for the
+    <a href="https://dotnet.microsoft.com/en-us/download/dotnet/8.0">.NET 8 Desktop Runtime</a>
+    <em>before</em> copying anything. Requires Windows 10 (1607+) or Windows 11, x64 — no
+    administrator rights to run the app.
+  </p>
+
+  <h2>Free and open source</h2>
+  <p>
+    MIT licensed. Source, issue tracker and contributions welcome at
+    <a href="https://github.com/maxico714/win-fast-finder">github.com/maxico714/win-fast-finder</a>.
+    Created by <strong>Rehan Khan</strong>. See <a href="https://github.com/maxico714/win-fast-finder/blob/main/CONTRIBUTING.md">CONTRIBUTING</a>
+    and <a href="https://github.com/maxico714/win-fast-finder/blob/main/SECURITY.md">SECURITY</a>.
+  </p>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Win Fast Finder &middot; v1.0.1 &middot; MIT License &middot; &copy; Rehan Khan</p>
+    <p>
+      <a href="https://github.com/maxico714/win-fast-finder/releases">Download</a> &middot;
+      <a href="https://github.com/maxico714/win-fast-finder#documentation">Documentation</a> &middot;
+      <a href="https://github.com/maxico714/win-fast-finder/issues">Issues</a> &middot;
+      <a href="https://github.com/maxico714/win-fast-finder/blob/main/docs/PRIVACY.md">Privacy</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

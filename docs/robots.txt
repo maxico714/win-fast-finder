@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://maxico714.github.io/win-fast-finder/sitemap.xml
