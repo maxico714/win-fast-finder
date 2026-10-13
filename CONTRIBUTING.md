@@ -1,6 +1,6 @@
-﻿# Contributing to win-fast-finder
+# Contributing to win-fast-finder
 
-Thanks for considering a contribution. This project is small on purpose â€”
+Thanks for considering a contribution. This project is small on purpose —
 focused scope, zero runtime dependencies, and tests that prove behaviour
 rather than describe it.
 
@@ -27,7 +27,7 @@ dotnet test tests/Wff.Tests/Wff.Tests.csproj --no-build
 ```
 
 You should see **0 warnings, 0 errors** and **62 passed**. If you don't, fix
-that before changing anything â€” you want a known-good baseline.
+that before changing anything — you want a known-good baseline.
 
 Full details in [docs/BUILDING.md](docs/BUILDING.md).
 
@@ -35,7 +35,7 @@ Full details in [docs/BUILDING.md](docs/BUILDING.md).
 
 Every behavioural change follows the same loop:
 
-1. **Write the test first.** It must fail â€” confirm it.
+1. **Write the test first.** It must fail — confirm it.
 2. **Make it pass** with the smallest change that works.
 3. **Mutation-verify.** Deliberately break the new code path (flip a
    comparison, delete a guard) and confirm the test fails again.
@@ -63,7 +63,7 @@ code (popup, theme, hook plumbing) stays thin and delegates to the engine.
 ## Style
 
 - C# with file-scoped namespaces, `Nullable` enabled, implicit usings.
-- Formatting is enforced by [`.editorconfig`](.editorconfig) â€” most IDEs
+- Formatting is enforced by [`.editorconfig`](.editorconfig) — most IDEs
   apply it automatically.
 - XML doc comments are not required; a good file-header comment explaining
   *why* is preferred. Several engine files already do this.
@@ -72,7 +72,7 @@ code (popup, theme, hook plumbing) stays thin and delegates to the engine.
 ## Pull requests
 
 1. Branch from `main`.
-2. Keep the diff focused â€” one concern per PR.
+2. Keep the diff focused — one concern per PR.
 3. Make sure `dotnet build` is clean and all tests pass.
 4. Update docs if behaviour changed: `README.md`, `docs/USAGE.md`,
    `docs/ARCHITECTURE.md` as applicable.
@@ -98,14 +98,14 @@ open a public issue.
 ## Suggesting features
 
 Open an issue with the problem you are trying to solve, not just the solution
-you have in mind. Scope is deliberately tight â€” see
+you have in mind. Scope is deliberately tight — see
 [docs/ROADMAP.md](docs/ROADMAP.md) for what is planned and what is parked.
 
 ## Project layout at a glance
 
 | Path | Role |
 |---|---|
-| `src/Wff.Engine` | Index, search, walk, cache, settings â€” no UI |
+| `src/Wff.Engine` | Index, search, walk, cache, settings — no UI |
 | `src/Wff.App` | WPF popup, hotkeys, headless CLI |
 | `src/Wff.Setup` | Installer wizard |
 | `tests/Wff.Tests` | Unit tests |

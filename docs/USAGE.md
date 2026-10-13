@@ -1,3 +1,8 @@
+---
+title: Usage - Query Syntax and Shortcuts | Win Fast Finder
+description: Complete reference for the Win Fast Finder popup, query syntax (ext:, size:, dm:, path:), keyboard shortcuts and settings.
+permalink: /usage.html
+---
 # USAGE — win-fast-finder
 
 Complete reference for the popup, query syntax, shortcuts and settings.
