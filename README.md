@@ -22,6 +22,7 @@ It searches **file names only, never file contents**. Windows 10 and
 Windows 11, x64.
 
 [Download the latest release](https://github.com/maxico714/win-fast-finder/releases)
+· [Docs site](https://maxico714.github.io/win-fast-finder/)
 · [Build from source](#build-from-source) · [Query syntax](#query-syntax)
 
 ![win-fast-finder popup showing results for "readme"](docs/assets/screenshot.png)
