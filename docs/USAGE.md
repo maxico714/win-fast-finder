@@ -68,6 +68,21 @@ Matches by **subsequence**, not substring — `inv` matches `**inv**oice.pdf`,
 `rn` matches `README` (as `r`…`n`). Matching letters are highlighted amber in
 the results, and those highlights are exactly the characters the scorer used.
 
+### Logical operators — `[AND]` and `[OR]`
+
+```text
+invoice [OR] report          # either word matches
+invoice [AND] 2024           # same as "invoice 2024" (AND is the default)
+invoice [OR] report [AND] final   # (invoice) OR (report AND final)
+```
+
+`[OR]` (any case) splits free text into alternative groups; a file matching
+any group is a hit, scored by its best group. `[AND]` is an explicit no-op
+for readability. Directives stay global across groups:
+`invoice [OR] report ext:pdf` means (invoice OR report) AND ext:pdf.
+A trailing `[OR]` changes nothing; bare `[OR]` / `[AND]` match nothing.
+Operators glow amber in the search box, and `[` offers both in suggestions.
+
 ### Globs — `*` and `?`
 
 ```

@@ -101,4 +101,19 @@ public sealed class QueryHintTests
         var paths = new[] { @"C:\a\b.pdf" };
         Assert.Empty(QueryHint.SuggestExtensions(paths, "zzz"));
     }
+
+    [Theory]
+    [InlineData("[", 2)]
+    [InlineData("[a", 1)]
+    [InlineData("[A", 1)]
+    [InlineData("[o", 1)]
+    [InlineData("[x", 0)]
+    [InlineData("x", 0)]
+    public void SuggestOperators_Completes_Bracket_Prefixes(string prefix, int count)
+    {
+        var got = QueryHint.SuggestOperators(prefix.ToLowerInvariant());
+        Assert.Equal(count, got.Count);
+        if (count > 0)
+            Assert.All(got, s => Assert.StartsWith("[", s.Insert));
+    }
 }

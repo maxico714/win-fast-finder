@@ -60,7 +60,9 @@ public static class Incremental
             catch { continue; }
             foreach (var k in kids)
             {
-                if (skip.Contains(Path.GetFileName(k)))
+                // Bare names AND full addresses: a blacklisted full path
+                // must not leak back in through the incremental shortcut.
+                if (Walker.IsSkippedDir(k, skip))
                     continue;
                 try
                 {
@@ -107,8 +109,7 @@ public static class Incremental
             catch { continue; }
             foreach (var k in kids)
             {
-                var name = Path.GetFileName(k);
-                if (skip.Contains(name))
+                if (Walker.IsSkippedDir(k, skip))
                     continue;
                 bool gone = !snapshot.TryGetValue(k, out var t) || t != DirTimeSafe(k);
                 if (gone)
@@ -130,7 +131,7 @@ public static class Incremental
                 var top = TopChild(root, f);
                 if (top == null)
                     continue; // root-level: already re-listed
-                if (skip.Contains(Path.GetFileName(top)))
+                if (Walker.IsSkippedDir(top, skip))
                     continue;
                 if (!stale.Contains(top) && Directory.Exists(top))
                     result.Add(f);

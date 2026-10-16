@@ -10,7 +10,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel x:Name="PageWelcome" Grid.Row="0" VerticalAlignment="Center">
-            <TextBlock Text="win-fast-finder 1.0.0" FontSize="24" FontWeight="Bold"/>
+            <TextBlock x:Name="WelcomeTitle" Text="win-fast-finder" FontSize="24" FontWeight="Bold"/>
             <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Opacity="0.75"
                        Text="Instant offline filename search for Windows. This wizard installs the app, adds a Start Menu shortcut, registers it for clean uninstall, and enables launch at login (you can opt out later in Settings)."/>
         </StackPanel>
@@ -30,6 +30,15 @@
                 <TextBox x:Name="DirBox" Padding="4" TextChanged="DirBox_Changed"/>
             </DockPanel>
             <TextBlock x:Name="DirError" Foreground="Red" Visibility="Collapsed" Margin="0,4,0,0"/>
+            <!-- Compatibility gate: Install stays disabled until the PC
+                 passes OS + runtime checks. -->
+            <TextBlock x:Name="CompatError" Foreground="Red" Visibility="Collapsed"
+                       Margin="0,8,0,0" TextWrapping="Wrap"/>
+            <TextBlock x:Name="CompatOk" Foreground="Green" Visibility="Collapsed"
+                       Margin="0,8,0,0" TextWrapping="Wrap"/>
+            <Button x:Name="CompatDownload" Content="Download .NET 8 Desktop Runtime…"
+                    Click="Download_Click" Padding="12,2" Margin="0,8,0,0"
+                    HorizontalAlignment="Left" Visibility="Collapsed"/>
         </StackPanel>
 
         <StackPanel x:Name="PageProgress" Grid.Row="0" Visibility="Collapsed" VerticalAlignment="Center">

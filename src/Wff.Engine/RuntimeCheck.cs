@@ -71,3 +71,45 @@ public static class RuntimeCheck
         catch { return false; }
     }
 }
+
+// Install-time compatibility: OS + runtime, pure logic, unit-tested.
+// The wizard disables Install while any issue is present.
+public static class Compatibility
+{
+    private static readonly Version MinWindows = new(10, 0, 14393); // Win10 1607
+
+    public static bool IsOsSupported(Version version, bool is64Bit) =>
+        is64Bit && version >= MinWindows;
+
+    public static (bool Ok, string Message) CheckOs()
+    {
+        var v = Environment.OSVersion.Version;
+        bool x64 = Environment.Is64BitOperatingSystem;
+        if (IsOsSupported(v, x64))
+            return (true, "");
+        return (false,
+            $"Windows 10 version 1607 or later (64-bit) is required; " +
+            $"this PC reports Windows {v} {(x64 ? "64-bit" : "32-bit")}.");
+    }
+
+    public static List<string> CheckAll()
+    {
+        var issues = new List<string>();
+        var (ok, msg) = CheckOs();
+        if (!ok)
+            issues.Add(msg);
+        if (!RuntimeCheck.IsDotNet8DesktopPresent())
+            issues.Add("Microsoft .NET 8 Desktop Runtime is missing. " +
+                "Install it, then press Recheck.");
+        return issues;
+    }
+
+    // One-line "everything is fine" summary, shown even when compatible
+    // so the check is never invisible.
+    public static string ReadySummary()
+    {
+        var v = Environment.OSVersion.Version;
+        string bits = Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit";
+        return $"Ready: Windows {v} {bits} · .NET 8 Desktop Runtime found.";
+    }
+}

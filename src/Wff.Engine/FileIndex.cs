@@ -110,7 +110,19 @@ public sealed class FileIndex
             && query.ModifiedAfterUtc == null && query.ModifiedBeforeUtc == null)
             return none;
 
-        int[] candidates = PickCandidates(terms, query);
+        // Text forms OR-groups: terms split on [OR] (case-insensitive),
+        // [AND] is an explicit no-op (AND is the default, binding tighter
+        // by construction). Directives stay global across groups: only the
+        // free-text terms branch. A query matching no group matches nothing.
+        var textGroups = SplitOrGroups(terms);
+        if (textGroups.Count == 0)
+        {
+            if (!HasFilters(query))
+                return none;
+            textGroups.Add(new List<string>()); // filter-only: GlobRank path
+        }
+        var flatTerms = textGroups.SelectMany(g => g).ToArray();
+        int[] candidates = PickCandidates(flatTerms, query);
         bool needFileInfo = query.MinSizeBytes != null || query.MaxSizeBytes != null
             || query.SizeDisplayTarget != null
             || query.ModifiedAfterUtc != null || query.ModifiedBeforeUtc != null;
@@ -145,27 +157,33 @@ public sealed class FileIndex
         }
         else
         {
-            // AND semantics: every term must match (by subsequence),
-            // score is the sum. Single-term exact-name boost is
-            // preserved inside Score().
+            // A candidate matches when ANY group fully matches (AND
+            // inside, OR across); its score is the best group's sum.
+            // Single-term exact-name boost is preserved inside Score().
             for (int n = 0; n < passed.Count; n++)
             {
                 if ((n & 4095) == 0)
                     ct.ThrowIfCancellationRequested();
                 int id = passed[n];
-                int s = 0;
-                foreach (var term in terms)
+                int s = -1;
+                foreach (var group in textGroups)
                 {
-                    int ts = Score(_names[id], term);
-                    if (query.MatchPath)
+                    int gs = 0;
+                    bool ok = true;
+                    foreach (var term in group)
                     {
-                        // Full-path match scores lower so name hits keep
-                        // ranking first.
-                        int ps = Score(_paths[id].ToLowerInvariant(), term) - 50;
-                        if (ps > ts) ts = ps;
+                        int ts = Score(_names[id], term);
+                        if (query.MatchPath)
+                        {
+                            // Full-path match scores lower so name hits keep
+                            // ranking first.
+                            int ps = Score(_paths[id].ToLowerInvariant(), term) - 50;
+                            if (ps > ts) ts = ps;
+                        }
+                        if (ts < 0) { ok = false; break; }
+                        gs += ts;
                     }
-                    if (ts < 0) { s = -1; break; }
-                    s += ts;
+                    if (ok && gs > s) s = gs;
                 }
                 if (s >= 0)
                     scored.Add((s, id));
@@ -205,6 +223,32 @@ public sealed class FileIndex
             .ToList();
         return (rows, total);
     }
+
+    // "[OR]" (any case) splits free text into alternative groups;
+    // "[AND]" is skipped: AND is already the default within a group.
+    // Empty groups are dropped, so a trailing "[OR]" changes nothing.
+    private static List<List<string>> SplitOrGroups(string[] terms)
+    {
+        var groups = new List<List<string>> { new() };
+        foreach (var t in terms)
+        {
+            if (t.Equals("[or]", StringComparison.OrdinalIgnoreCase))
+            {
+                groups.Add(new List<string>());
+                continue;
+            }
+            if (t.Equals("[and]", StringComparison.OrdinalIgnoreCase))
+                continue;
+            groups[^1].Add(t);
+        }
+        return groups.Where(g => g.Count > 0).ToList();
+    }
+
+    private static bool HasFilters(Query query) =>
+        query.Extensions.Count > 0 || query.Globs.Count > 0
+        || query.MinSizeBytes != null || query.MaxSizeBytes != null
+        || query.SizeDisplayTarget != null
+        || query.ModifiedAfterUtc != null || query.ModifiedBeforeUtc != null;
 
     private int[] PickCandidates(string[] terms, Query query)
     {

@@ -154,14 +154,16 @@ directive names are case-insensitive.
 |---|---|---|
 | `report` | Subsequence match on filenames (`report` matches `my **repo**rt.pdf`) | `invoice` |
 | `*.pdf` | Glob (`*` any run, `?` one character) | `2024-*.xlsx` |
+| `[OR]` | Logical OR between words; `[AND]` is explicit AND (the default) | `invoice [OR] report ext:pdf` |
 | `ext:pdf` | Extension filter (repeatable = OR); leading dot optional | `ext:pdf ext:docx` |
 | `size:>10kb` | `>` `<` `>=` `<=` `=` or bare; decimals; units `b k kb m mb g gb t tb`; ranges (`1mb..5mb`) | `size:<=2mb` |
 | `dm:<7d` | Relative (`h d w m y`), `today`/`yesterday`, absolute ISO days, ranges | `dm:<12h` |
 | `path:` | Full-path mode — `path:Downloads` means the same as `Downloads path:` | `path:Downloads` |
 
-Combine freely:
+Combine freely — words AND by default, `[OR]` branches, directives global:
 
 ```
+invoice [OR] report ext:pdf size:>1mb
 rep* ext:pdf size:>10kb dm:<30d path:projects
 ```
 

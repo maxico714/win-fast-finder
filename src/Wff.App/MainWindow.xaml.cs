@@ -481,6 +481,16 @@ public partial class MainWindow : Window
                 });
             return;
         }
+        if (lower is "[and]" or "[or]")
+        {
+            // Logical operators glow amber like directive names.
+            QueryOverlay.Inlines.Add(new System.Windows.Documents.Run(token)
+            {
+                Foreground = AmberBrush,
+                FontWeight = FontWeights.Bold,
+            });
+            return;
+        }
         if (Glob.IsGlob(lower))
         {
             QueryOverlay.Inlines.Add(new System.Windows.Documents.Run(token) { Foreground = CyanBrush });
@@ -502,11 +512,18 @@ public partial class MainWindow : Window
         var list = new List<Suggestion>();
         if (tail.Length > 0)
         {
-            var split = QueryHint.SplitDirective(tail);
-            if (split != null && split.Value.Name == "ext:")
-                list.AddRange(QueryHint.FormatExtSuggestions(_extCache, split.Value.Value));
-            else if (split == null)
-                list.AddRange(QueryHint.SuggestNames(tail));
+            if (tail.StartsWith("[", StringComparison.Ordinal))
+            {
+                list.AddRange(QueryHint.SuggestOperators(tail));
+            }
+            else
+            {
+                var split = QueryHint.SplitDirective(tail);
+                if (split != null && split.Value.Name == "ext:")
+                    list.AddRange(QueryHint.FormatExtSuggestions(_extCache, split.Value.Value));
+                else if (split == null)
+                    list.AddRange(QueryHint.SuggestNames(tail));
+            }
         }
         if (list.Count == 0)
         {
@@ -742,6 +759,10 @@ public partial class MainWindow : Window
             else if (t.Contains('*') || t.Contains('?'))
             {
                 words.Add(t.Replace("*", "").Replace("?", ""));
+            }
+            else if (t is "[and]" or "[or]")
+            {
+                // Logical operators: keywords, nothing to highlight.
             }
             else
             {

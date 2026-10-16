@@ -15,6 +15,10 @@
 Globs (* = any run, ? = one character):
   *.pdf   2024-*.xlsx
 
+Logical operators (directives stay global):
+  invoice [OR] report   [AND] = explicit AND (default)
+  invoice [OR] report ext:pdf
+
 Extensions (repeatable = OR, Tab completes, values suggested):
   ext:pdf   ext:pdf ext:docx   ext:.PDF
 

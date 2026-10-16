@@ -487,6 +487,7 @@ footer{margin-top:80px;border-top:1px solid var(--line);background:var(--bg2)}
       <tbody>
         <tr><td><code>report</code></td><td>Subsequence match on filenames</td><td><code>invoice</code> finds <code>my invoice.pdf</code></td></tr>
         <tr><td><code>*.pdf</code></td><td>Glob — <code>*</code> any run, <code>?</code> one character</td><td><code>2024-*.xlsx</code></td></tr>
+        <tr><td><code>[OR]</code></td><td>Logical OR between words; <code>[AND]</code> is explicit AND</td><td><code>invoice [OR] report ext:pdf</code></td></tr>
         <tr><td><code>ext:pdf</code></td><td>Extension filter, repeatable = OR</td><td><code>ext:pdf ext:docx</code></td></tr>
         <tr><td><code>size:&gt;10kb</code></td><td>Size filter: comparisons, decimals, units <code>b k kb m mb g gb t tb</code>, ranges</td><td><code>size:1mb..5mb</code></td></tr>
         <tr><td><code>dm:&lt;7d</code></td><td>Date filter: relative units, <code>today</code>, absolute ISO days, ranges</td><td><code>dm:2024-05-10</code></td></tr>

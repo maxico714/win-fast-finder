@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Reflection;
 using Microsoft.Win32;
 
 namespace Wff.Setup;
@@ -10,7 +11,14 @@ namespace Wff.Setup;
 public static class Installer
 {
     public const string AppName = "win-fast-finder";
+    // Fallback only: the real version always comes from the assembly
+    // (Directory.Build.props), so screens and registry never go stale.
     public const string Version = "1.0.2";
+
+    public static string AppVersion =>
+        typeof(Installer).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? Version;
     public const string UninstallKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\win-fast-finder";
     public const string RunKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
     public const string RunValue = "win-fast-finder";
@@ -59,7 +67,7 @@ public static class Installer
         using (var key = Registry.CurrentUser.CreateSubKey(UninstallKey))
         {
             key?.SetValue("DisplayName", AppName);
-            key?.SetValue("DisplayVersion", Version);
+            key?.SetValue("DisplayVersion", AppVersion);
             key?.SetValue("Publisher", "win-fast-finder contributors");
             key?.SetValue("UninstallString", $"\"{Path.Combine(dir, "Uninstall.exe")}\" --uninstall");
             key?.SetValue("NoModify", 1);

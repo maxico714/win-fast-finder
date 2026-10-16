@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-16
+
 ### Added
+- Logical operators `[AND]` (explicit default) and `[OR]` (either side
+  may match, AND binds tighter, directives stay global) — amber keywords
+  in the box, `[` offers both in suggestions.
+- Installer compatibility gate: the directory page runs OS + runtime
+  checks off the UI thread; **Install** stays disabled with reasons
+  until the PC passes, with a download button and Recheck.
+- Installer shows the real assembly version everywhere (welcome title,
+  registry DisplayVersion) instead of a hardcoded string.
+- Full-path blacklist entries now hold through incremental refresh
+  (previously only bare folder names did).
 - Full `size:` grammar: `>=` `<=` `=`, decimals (`1.5gb`), short units
   (`k m g t`), `tb`, ranges (`1mb..5mb`), spaced units (`size:>1 gb`).
 - Full `dm:` grammar: hours/weeks/months/years (`dm:<12h`), `today` /

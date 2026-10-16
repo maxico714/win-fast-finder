@@ -115,6 +115,10 @@ The log is decisive here.
    `size:` are ANDed with free text.
 5. Look for the `refreshed N files` line in the log. If `N` is suspiciously
    small, a folder you expect may be blacklisted (Settings → Index).
+6. New file in a deep subfolder still missing? Quick refresh only re-checks
+   top-level folders, so deeply nested additions can hide until the next
+   full rebuild — press **Resync**, or switch Settings → Index → Startup
+   refresh to **Deep**.
 
 ## Symptom: installer says the runtime is missing
 

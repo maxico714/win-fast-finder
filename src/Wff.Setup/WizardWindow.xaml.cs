@@ -9,10 +9,13 @@ namespace Wff.Setup;
 public partial class WizardWindow : Window
 {
     private int _page; // 0 welcome, 1 license, 2 directory, 3 progress, 4 finish
+    private List<string>? _compatIssues; // null = not checked yet
+    private bool _compatChecking;
 
     public WizardWindow()
     {
         InitializeComponent();
+        WelcomeTitle.Text = $"win-fast-finder {Installer.AppVersion}";
         LicenseBox.Text = Installer.LicenseText();
         DirBox.Text = Installer.DefaultDir;
         ShowPage(0);
@@ -43,6 +46,8 @@ public partial class WizardWindow : Window
             3 => false,
             _ => true,
         };
+        if (page == 2)
+            RefreshCompatAsync();
     }
 
     private void Download_Click(object sender, RoutedEventArgs e)
@@ -65,7 +70,19 @@ public partial class WizardWindow : Window
     private void Next_Click(object sender, RoutedEventArgs e)
     {
         if (_page == 4) { Close(); return; }
-        if (_page == 2) { StartInstall(); return; }
+        if (_page == 2)
+        {
+            // Blocked or still checking: this click is a Recheck, not Install.
+            if (_compatChecking)
+                return;
+            if (_compatIssues == null || _compatIssues.Count > 0)
+            {
+                RefreshCompatAsync();
+                return;
+            }
+            StartInstall();
+            return;
+        }
         if (_page == 0 || _page == 5)
         {
             // Compatibility gate: no runtime, no install.
@@ -76,6 +93,56 @@ public partial class WizardWindow : Window
             }
         }
         ShowPage(_page == 5 ? 0 : _page + 1);
+    }
+
+    // Compatibility gate for the directory page: Install stays disabled
+    // until the PC passes OS + runtime checks. Runs off the UI thread —
+    // the CLI fallback can take seconds, and a frozen wizard looks broken.
+    private void RefreshCompatAsync()
+    {
+        if (_compatChecking)
+            return;
+        _compatChecking = true;
+        NextBtn.Content = "Checking…";
+        NextBtn.IsEnabled = false;
+        Task.Run(() =>
+        {
+            List<string> issues;
+            try { issues = Wff.Engine.Compatibility.CheckAll(); }
+            catch (Exception ex) { issues = new List<string> { "Compatibility check failed: " + ex.Message }; }
+            Dispatcher.BeginInvoke(() =>
+            {
+                _compatChecking = false;
+                _compatIssues = issues;
+                ApplyCompatState();
+            });
+        });
+    }
+
+    private void ApplyCompatState()
+    {
+        if (_page != 2)
+            return;
+        bool dirOk = DirError.Visibility != Visibility.Visible && DirBox.Text.Length > 0;
+        bool blocked = _compatIssues == null || _compatIssues.Count > 0;
+        if (_compatIssues != null && _compatIssues.Count > 0)
+        {
+            CompatError.Text = "This PC is not ready:\n• " + string.Join("\n• ", _compatIssues);
+            CompatError.Visibility = Visibility.Visible;
+            CompatOk.Visibility = Visibility.Collapsed;
+            CompatDownload.Visibility = _compatIssues.Any(
+                m => m.StartsWith("Microsoft .NET", StringComparison.Ordinal))
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
+        else
+        {
+            CompatError.Visibility = Visibility.Collapsed;
+            CompatDownload.Visibility = Visibility.Collapsed;
+            CompatOk.Text = Wff.Engine.Compatibility.ReadySummary();
+            CompatOk.Visibility = Visibility.Visible;
+        }
+        NextBtn.Content = blocked ? "Recheck" : "Install";
+        NextBtn.IsEnabled = dirOk && !blocked;
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
@@ -92,7 +159,7 @@ public partial class WizardWindow : Window
         DirError.Text = err ?? "";
         DirError.Visibility = err == null ? Visibility.Collapsed : Visibility.Visible;
         if (_page == 2)
-            NextBtn.IsEnabled = err == null;
+            ApplyCompatState();
     }
 
     private void Browse_Click(object sender, RoutedEventArgs e)

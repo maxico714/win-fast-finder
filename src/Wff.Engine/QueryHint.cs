@@ -44,6 +44,26 @@ public static class QueryHint
         return null;
     }
 
+    // Logical operators for the "[" prefix: [AND] (explicit default)
+    // and [OR] (either side may match).
+    public static List<Suggestion> SuggestOperators(string prefixLower, int max = 8)
+    {
+        var out_ = new List<Suggestion>();
+        var ops = new[]
+        {
+            ("[AND]", "explicit AND between words (the default)"),
+            ("[OR]", "logical OR: either side may match"),
+        };
+        foreach (var (op, desc) in ops)
+        {
+            if (op.StartsWith(prefixLower, StringComparison.OrdinalIgnoreCase))
+                out_.Add(new Suggestion(op, op, desc));
+            if (out_.Count >= max)
+                break;
+        }
+        return out_;
+    }
+
     public static List<Suggestion> SuggestNames(string prefixLower, int max = 8)
     {
         var out_ = new List<Suggestion>();
