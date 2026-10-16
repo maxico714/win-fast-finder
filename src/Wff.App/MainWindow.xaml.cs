@@ -25,6 +25,17 @@ public partial class MainWindow : Window
     private bool _dialogOpen; // a modal dialog owns focus: don't auto-hide
     private List<string>? _indexedPaths;
     private Settings _settings = new();
+    private System.Windows.Controls.ScrollViewer? _boxScroller; // TextBox's own scroller
+    private List<(string Ext, int Count)> _extCache = new(); // top extensions, rebuilt per index
+    private static readonly System.Windows.Media.SolidColorBrush AmberBrush = MakeBrush(0xFF, 0xB9, 0x00);
+    private static readonly System.Windows.Media.SolidColorBrush CyanBrush = MakeBrush(0x22, 0xD3, 0xEE);
+
+    private static System.Windows.Media.SolidColorBrush MakeBrush(byte r, byte g, byte b)
+    {
+        var br = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
+        br.Freeze();
+        return br;
+    }
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
@@ -47,6 +58,19 @@ public partial class MainWindow : Window
     }
 
     public void SetIndex(FileIndex index) => _index = index;
+
+    private void RebuildExtCache()
+    {
+        // Distinct-extension suggestions must not re-walk a huge index per
+        // keystroke: snapshot the top 300 once per index build.
+        try
+        {
+            _extCache = _indexedPaths == null
+                ? new List<(string Ext, int Count)>()
+                : QueryHint.TopExtensions(_indexedPaths).Take(300).ToList();
+        }
+        catch { _extCache = new List<(string Ext, int Count)>(); }
+    }
 
     // Idempotent startup: callable from Loaded AND from App.OnStartup.
     // (A never-shown Hidden window cannot be trusted to raise Loaded.)
@@ -149,6 +173,7 @@ public partial class MainWindow : Window
                 {
                     SetIndex(index);
                     _indexedPaths = files;
+                    RebuildExtCache();
                     Status.Text = $"{files.Count:N0} files in {sw.ElapsedMilliseconds:N0} ms";
                 });
                         return;
@@ -169,6 +194,7 @@ public partial class MainWindow : Window
                 {
                     SetIndex(freshIndex);
                     _indexedPaths = files;
+                    RebuildExtCache();
                     Status.Text = $"{files.Count:N0} files in {sw.ElapsedMilliseconds:N0} ms";
                 });
             }
@@ -342,10 +368,172 @@ public partial class MainWindow : Window
         Hits.Visibility = vis;
         BottomBar.Visibility = vis;
         if (!hasText)
+        {
             Hits.Items.Clear();
+            CloseSuggestions();
+        }
+        SyncOverlay();
+        if (hasText)
+            UpdateSuggestions();
         _debounce.Stop();
         if (hasText)
             _debounce.Start();
+    }
+
+    private void HookBoxScroller()
+    {
+        if (_boxScroller != null)
+            return;
+        try
+        {
+            QueryBox.ApplyTemplate();
+            _boxScroller = QueryBox.Template.FindName("PART_ContentHost", QueryBox)
+                as System.Windows.Controls.ScrollViewer;
+            if (_boxScroller != null)
+                _boxScroller.ScrollChanged += (_, _) => SyncOverlayOffset();
+        }
+        catch { }
+    }
+
+    private void SyncOverlayOffset()
+    {
+        if (_boxScroller != null)
+            OverlayScroll.ScrollToHorizontalOffset(_boxScroller.HorizontalOffset);
+    }
+
+    // Keyword highlighting inside the search box: directive names amber,
+    // values and globs cyan, free text normal. The overlay is a read-only
+    // twin; the transparent TextBox on top keeps typing/caret/selection.
+    private void SyncOverlay()
+    {
+        HookBoxScroller();
+        QueryOverlay.Inlines.Clear();
+        var text = QueryBox.Text;
+        var normal = SystemColors.WindowTextBrush;
+        int i = 0;
+        while (i < text.Length)
+        {
+            if (char.IsWhiteSpace(text[i]))
+            {
+                int j = i + 1;
+                while (j < text.Length && char.IsWhiteSpace(text[j])) j++;
+                QueryOverlay.Inlines.Add(new System.Windows.Documents.Run(text[i..j]) { Foreground = normal });
+                i = j;
+            }
+            else
+            {
+                int j = i + 1;
+                while (j < text.Length && !char.IsWhiteSpace(text[j])) j++;
+                AppendTokenRuns(text[i..j], normal);
+                i = j;
+            }
+        }
+        SyncOverlayOffset();
+    }
+
+    private void AppendTokenRuns(string token, System.Windows.Media.Brush normal)
+    {
+        var lower = token.ToLowerInvariant();
+        var split = QueryHint.SplitDirective(lower);
+        if (split != null)
+        {
+            QueryOverlay.Inlines.Add(new System.Windows.Documents.Run(token[..split.Value.Name.Length])
+            {
+                Foreground = AmberBrush,
+                FontWeight = FontWeights.Bold,
+            });
+            if (split.Value.Value.Length > 0)
+                QueryOverlay.Inlines.Add(new System.Windows.Documents.Run(token[split.Value.Name.Length..])
+                {
+                    Foreground = CyanBrush,
+                });
+            return;
+        }
+        if (Glob.IsGlob(lower))
+        {
+            QueryOverlay.Inlines.Add(new System.Windows.Documents.Run(token) { Foreground = CyanBrush });
+            return;
+        }
+        QueryOverlay.Inlines.Add(new System.Windows.Documents.Run(token) { Foreground = normal });
+    }
+
+    // Autocomplete: directive names for a strict prefix ("ex" -> ext:),
+    // index-backed ext: values afterwards. Enter always opens the file;
+    // only Tab (or click) accepts a suggestion.
+    private void UpdateSuggestions()
+    {
+        var text = QueryBox.Text;
+        int caret = Math.Clamp(QueryBox.CaretIndex, 0, text.Length);
+        int start = caret;
+        while (start > 0 && !char.IsWhiteSpace(text[start - 1])) start--;
+        string tail = text[start..caret].ToLowerInvariant();
+        var list = new List<Suggestion>();
+        if (tail.Length > 0)
+        {
+            var split = QueryHint.SplitDirective(tail);
+            if (split != null && split.Value.Name == "ext:")
+                list.AddRange(QueryHint.FormatExtSuggestions(_extCache, split.Value.Value));
+            else if (split == null)
+                list.AddRange(QueryHint.SuggestNames(tail));
+        }
+        if (list.Count == 0)
+        {
+            CloseSuggestions();
+            return;
+        }
+        SuggestBox.ItemsSource = list;
+        SuggestBox.SelectedIndex = 0;
+        SuggestBox.ScrollIntoView(SuggestBox.SelectedItem);
+        SuggestBox.Visibility = Visibility.Visible;
+    }
+
+    private void CloseSuggestions()
+    {
+        SuggestBox.Visibility = Visibility.Collapsed;
+        SuggestBox.ItemsSource = null;
+    }
+
+    private void MoveSuggestion(int dir)
+    {
+        int n = SuggestBox.Items.Count;
+        if (n == 0)
+            return;
+        int i = (SuggestBox.SelectedIndex + dir + n) % n;
+        SuggestBox.SelectedIndex = i;
+        SuggestBox.ScrollIntoView(SuggestBox.SelectedItem);
+    }
+
+    private void AcceptSelectedSuggestion()
+    {
+        if (SuggestBox.SelectedItem is Suggestion s)
+            AcceptSuggestion(s);
+        else if (SuggestBox.Items.Count > 0 && SuggestBox.Items[0] is Suggestion first)
+            AcceptSuggestion(first);
+    }
+
+    private void AcceptSuggestion(Suggestion s)
+    {
+        var text = QueryBox.Text;
+        int caret = Math.Clamp(QueryBox.CaretIndex, 0, text.Length);
+        int start = caret;
+        while (start > 0 && !char.IsWhiteSpace(text[start - 1])) start--;
+        int end = caret;
+        while (end < text.Length && !char.IsWhiteSpace(text[end])) end++;
+        QueryBox.Text = text[..start] + s.Insert + text[end..];
+        QueryBox.CaretIndex = start + s.Insert.Length;
+        QueryBox.Focus();
+        // TextChanged refreshes overlay + suggestions (typing "ext:"
+        // immediately offers that extension's values next).
+    }
+
+    private void SuggestBox_Click(object sender, MouseButtonEventArgs e)
+    {
+        // Accept only real item clicks, not empty-area clicks.
+        DependencyObject? d = e.OriginalSource as DependencyObject;
+        while (d != null && d is not System.Windows.Controls.ListBoxItem)
+            d = System.Windows.Media.VisualTreeHelper.GetParent(d);
+        if (d is System.Windows.Controls.ListBoxItem item && item.DataContext is Suggestion s)
+            AcceptSuggestion(s);
     }
 
     private void RunSearch(string q, int id)
@@ -362,11 +550,12 @@ public partial class MainWindow : Window
         Task.Run(() =>
         {
             var hits = index.Search(query, max);
+            bool sizeActive = query.MinSizeBytes != null || query.MaxSizeBytes != null;
             Dispatcher.BeginInvoke(() =>
             {
                 if (id != _queryId)
                     return; // stale: a newer keystroke already queued
-                RenderHits(hits, q);
+                RenderHits(hits, q, sizeActive);
             });
         });
     }
@@ -379,7 +568,7 @@ public partial class MainWindow : Window
         public HashSet<int> Spans { get; init; } = new();
     }
 
-    private void RenderHits(List<string> hits, string query)
+    private void RenderHits(List<string> hits, string query, bool highlightSize)
     {
         var words = HighlightWords(query);
         Hits.Items.Clear();
@@ -411,11 +600,29 @@ public partial class MainWindow : Window
             }
             var line2 = new System.Windows.Controls.TextBlock
             {
-                Text = h,
                 FontSize = 11,
                 Foreground = SystemColors.GrayTextBrush,
                 TextTrimming = TextTrimming.CharacterEllipsis,
             };
+            // Every row shows the file size up front; with a size: filter
+            // active it glows amber like an exact match.
+            string? sizeText = TryGetSize(h);
+            if (sizeText != null)
+            {
+                line2.Inlines.Add(new System.Windows.Documents.Run(sizeText)
+                {
+                    Foreground = highlightSize ? accent : SystemColors.GrayTextBrush,
+                    FontWeight = highlightSize ? FontWeights.Bold : FontWeights.Normal,
+                });
+                line2.Inlines.Add(new System.Windows.Documents.Run(" · ")
+                {
+                    Foreground = SystemColors.GrayTextBrush,
+                });
+            }
+            line2.Inlines.Add(new System.Windows.Documents.Run(h)
+            {
+                Foreground = SystemColors.GrayTextBrush,
+            });
             var panel = new System.Windows.Controls.StackPanel();
             panel.Children.Add(line1);
             panel.Children.Add(line2);
@@ -431,6 +638,14 @@ public partial class MainWindow : Window
             ((System.Windows.Controls.ListBoxItem)Hits.Items[0]).IsSelected = true;
     }
 
+    private static string? TryGetSize(string path)
+    {
+        // One stat per visible row (<= MaxResults, default 50): ms-scale.
+        // Missing/unreadable file: size omitted, row still shown.
+        try { return SizeFormat.FormatBytes(new FileInfo(path).Length); }
+        catch { return null; }
+    }
+
     private static List<string> HighlightWords(string query)
     {
         var words = new List<string>();
@@ -441,6 +656,14 @@ public partial class MainWindow : Window
             {
                 int c = t.IndexOf(':');
                 if (c + 1 < t.Length) words.Add(t[(c + 1)..].TrimStart('.', '<', '>', '='));
+            }
+            else if (t == "path:")
+            {
+                // Directive only: nothing to highlight.
+            }
+            else if (t.StartsWith("path:") && t.Length > 5)
+            {
+                words.Add(t[5..]); // path:value: highlight the value
             }
             else if (t.Contains('*') || t.Contains('?'))
             {
@@ -456,23 +679,29 @@ public partial class MainWindow : Window
 
     private void QueryBox_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        // Tab completes directive prefixes: ex→ext:, si→size:, dm→dm:
+        if (SuggestBox.Visibility == Visibility.Visible && SuggestBox.HasItems)
+        {
+            if (e.Key == Key.Down) { MoveSuggestion(1); e.Handled = true; return; }
+            if (e.Key == Key.Up) { MoveSuggestion(-1); e.Handled = true; return; }
+            // Tab accepts; Enter still opens the file. Esc dismisses here
+            // (handled) so KeyDown never hides the popup for it.
+            if (e.Key == Key.Tab) { AcceptSelectedSuggestion(); e.Handled = true; return; }
+            if (e.Key == Key.Escape) { CloseSuggestions(); e.Handled = true; return; }
+        }
+        // Fallback Tab: complete directive prefixes incl. path:
+        // ex→ext:, si→size:, dm→dm:, p→path:
         if (e.Key == Key.Tab && QueryBox.CaretIndex == QueryBox.Text.Length)
         {
             var text = QueryBox.Text;
             int last = text.LastIndexOf(' ');
             string head = last < 0 ? "" : text[..(last + 1)];
             string tail = (last < 0 ? text : text[(last + 1)..]).ToLowerInvariant();
-            string[] dirs = { "ext:", "size:", "dm:" };
-            foreach (var d in dirs)
+            string? done = QueryHint.CompleteName(tail);
+            if (done != null)
             {
-                if (d.StartsWith(tail) && tail.Length > 0 && tail.Length < d.Length)
-                {
-                    QueryBox.Text = head + d;
-                    QueryBox.CaretIndex = QueryBox.Text.Length;
-                    e.Handled = true;
-                    return;
-                }
+                QueryBox.Text = head + done;
+                QueryBox.CaretIndex = QueryBox.Text.Length;
+                e.Handled = true;
             }
         }
     }

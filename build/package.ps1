@@ -60,14 +60,23 @@ if (-not $SkipTests) {
 # --- 3 & 4: publish ---------------------------------------------------------
 $distWin = Join-Path $root 'dist\win-fx'
 $distSetup = Join-Path $root 'dist\setup-fx'
+# Publish never cleans its target: wipe both dirs first so stale files
+# from an older layout (e.g. an apphost-era WffSetup.dll) can never
+# poison the single-file guard below.
+foreach ($d in @($distWin, $distSetup)) {
+    if (Test-Path $d) { Remove-Item $d -Recurse -Force }
+}
 
 Assert-Step 'publish Wff.App' {
     dotnet publish src/Wff.App/Wff.App.csproj -c Release -o $distWin `
         -p:PublishSingleFile=true -p:SelfContained=false
 }
 Assert-Step 'publish Wff.Setup' {
+    # Single-file is MANDATORY here: only WffSetup.exe (plus the appended
+    # payload) ships inside the installer. A bare apphost exe dies silently
+    # without its .dll/.runtimeconfig.json beside it (v1.0.1 bug: no wizard).
     dotnet publish src/Wff.Setup/Wff.Setup.csproj -c Release -o $distSetup `
-        -p:SelfContained=false
+        -p:PublishSingleFile=true -p:SelfContained=false
 }
 
 $stub = Join-Path $distSetup 'WffSetup.exe'
@@ -75,6 +84,9 @@ $app = Join-Path $distWin 'Wff.App.exe'
 $license = Join-Path $root 'LICENSE'
 foreach ($p in @($stub, $app, $license)) {
     if (-not (Test-Path -LiteralPath $p)) { throw "Missing required artifact: $p" }
+}
+if (Test-Path (Join-Path $distSetup 'WffSetup.dll')) {
+    throw 'Stub is not single-file (WffSetup.dll emitted): wizard would not launch. Refusing to package.'
 }
 
 # --- 5: payload zip ---------------------------------------------------------

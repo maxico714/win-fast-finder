@@ -480,10 +480,10 @@ footer{margin-top:80px;border-top:1px solid var(--line);background:var(--bg2)}
         <tr><td><code>ext:pdf</code></td><td>Extension filter, repeatable = OR</td><td><code>ext:pdf ext:docx</code></td></tr>
         <tr><td><code>size:&gt;10kb</code></td><td>Size filter, units <code>b kb mb gb</code></td><td><code>size:&lt;2mb</code></td></tr>
         <tr><td><code>dm:&lt;7d</code></td><td>Modified within 7 days (<code>y d m</code>)</td><td><code>dm:&lt;30d</code></td></tr>
-        <tr><td><code>path:</code></td><td>Whole-token match against the full path</td><td><code>path:Downloads</code></td></tr>
+        <tr><td><code>path:</code></td><td>Full-path mode — <code>path:Downloads</code> ≡ <code>Downloads path:</code></td><td><code>path:Downloads</code></td></tr>
       </tbody>
     </table>
-    <p style="color:var(--muted);margin:16px 0 0">Press <kbd>Tab</kbd> to complete <code>ex</code>→<code>ext:</code>, <code>si</code>→<code>size:</code>, <code>dm</code>→<code>dm:</code>. Exact filename matches get a ★ and rank first. Full reference: <a href="https://github.com/maxico714/win-fast-finder/blob/main/docs/USAGE.md">usage guide</a>.</p>
+    <p style="color:var(--muted);margin:16px 0 0">Press <kbd>Tab</kbd> to complete <code>ex</code>→<code>ext:</code>, <code>si</code>→<code>size:</code>, <code>dm</code>→<code>dm:</code>, <code>p</code> for path: (Tab accepts the suggestion list too). Exact filename matches get a ★ and rank first. Full reference: <a href="https://github.com/maxico714/win-fast-finder/blob/main/docs/USAGE.md">usage guide</a>. In the app's search box, directive names glow amber and values cyan, and a suggestion list offers directives plus real extensions from your index.</p>
   </div>
   <h3 class="sub reveal">Default hotkeys</h3>
   <div class="panel reveal">

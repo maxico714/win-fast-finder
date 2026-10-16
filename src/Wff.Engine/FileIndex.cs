@@ -51,57 +51,99 @@ public sealed class FileIndex
         if (topN <= 0)
             return result;
         var q = query.Text.ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(q) && query.Extensions.Count == 0
+        var terms = q.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (terms.Length == 0 && query.Extensions.Count == 0
             && query.Globs.Count == 0
             && query.MinSizeBytes == null && query.MaxSizeBytes == null
             && query.ModifiedAfterUtc == null && query.ModifiedBeforeUtc == null)
             return result;
 
-        int[] candidates = PickCandidates(q, query);
-        var scored = new List<(int Score, int Idx)>(Math.Min(candidates.Length, 4096));
+        int[] candidates = PickCandidates(terms, query);
+        bool needFileInfo = query.MinSizeBytes != null || query.MaxSizeBytes != null
+            || query.ModifiedAfterUtc != null || query.ModifiedBeforeUtc != null;
+
+        // Cheap filters first (no syscalls), then file filters over ALL
+        // survivors (one stat per file). A selective filter must never be
+        // truncated by an arbitrary examined-cap: every candidate is tested.
+        var passed = new List<int>(Math.Min(candidates.Length, 4096));
         foreach (var id in candidates)
         {
             if (query.Extensions.Count > 0 && !MatchExt(_names[id], query.Extensions))
                 continue; // free: extension check needs no syscalls
             if (query.Globs.Count > 0 && !MatchAllGlobs(_names[id], query.Globs))
                 continue;
-            int s = string.IsNullOrWhiteSpace(q) ? GlobRank(_names[id], query) : Score(_names[id], q);
-            if (query.MatchPath && !string.IsNullOrWhiteSpace(q))
+            if (needFileInfo && !MatchFileFilters(_paths[id], query))
+                continue;
+            passed.Add(id);
+        }
+
+        var scored = new List<(int Score, int Idx)>(Math.Min(passed.Count, 4096));
+        if (terms.Length == 0)
+        {
+            foreach (var id in passed)
             {
-                // Full-path match scores lower so name hits keep ranking first.
-                int ps = Score(_paths[id].ToLowerInvariant(), q) - 50;
-                if (ps > s) s = ps;
+                scored.Add((GlobRank(_names[id], query), id));
+                if (scored.Count >= 20000)
+                    break;
             }
-            if (s >= 0)
-                scored.Add((s, id));
-            if (scored.Count >= 20000)
-                break;
+        }
+        else
+        {
+            // AND semantics: every term must match (by subsequence),
+            // score is the sum. Single-term exact-name boost is
+            // preserved inside Score().
+            foreach (var id in passed)
+            {
+                int s = 0;
+                foreach (var term in terms)
+                {
+                    int ts = Score(_names[id], term);
+                    if (query.MatchPath)
+                    {
+                        // Full-path match scores lower so name hits keep
+                        // ranking first.
+                        int ps = Score(_paths[id].ToLowerInvariant(), term) - 50;
+                        if (ps > ts) ts = ps;
+                    }
+                    if (ts < 0) { s = -1; break; }
+                    s += ts;
+                }
+                if (s >= 0)
+                    scored.Add((s, id));
+                if (scored.Count >= 20000)
+                    break;
+            }
         }
         scored.Sort((a, b) => b.Score.CompareTo(a.Score));
 
-        // Size/date need FileInfo syscalls: apply to top 500 only (ms-scale).
-        int taken = 0;
-        foreach (var (_, id) in scored)
+        if (query.Sort == "rank")
         {
-            if (taken >= 500)
-                break;
-            if (MatchFileFilters(_paths[id], query))
-            {
-                result.Add(_paths[id]);
-                if (result.Count >= topN && query.Sort == "rank")
-                    break;
-            }
-            taken++;
+            int n = Math.Min(topN, scored.Count);
+            for (int i = 0; i < n; i++)
+                result.Add(_paths[scored[i].Idx]);
+            return result;
         }
+        foreach (var (_, id) in scored)
+            result.Add(_paths[id]);
         var sorted = Sorter.Apply(result, query.Sort);
         return sorted.Count > topN ? sorted.GetRange(0, topN) : sorted;
     }
 
-    private int[] PickCandidates(string q, Query query)
+    private int[] PickCandidates(string[] terms, Query query)
     {
-        if (!string.IsNullOrWhiteSpace(q) && !query.MatchPath)
-            return Narrow(q);
-        if (!string.IsNullOrWhiteSpace(q) && query.MatchPath)
+        if (terms.Length > 0 && !query.MatchPath)
+        {
+            // Union of each term's narrowing: recall for multi-term
+            // queries; the scoring loop enforces AND afterwards.
+            var seen = new HashSet<int>();
+            var union = new List<int>();
+            foreach (var t in terms)
+                foreach (var id in Narrow(t))
+                    if (seen.Add(id))
+                        union.Add(id);
+            return union.ToArray();
+        }
+        if (terms.Length > 0 && query.MatchPath)
             return AllIds(); // path matching needs full scan (opt-in mode)
         // Glob-only query: narrow by longest literal run, else full scan.
         string best = "";

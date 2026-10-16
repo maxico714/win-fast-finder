@@ -157,7 +157,7 @@ directive names are case-insensitive.
 | `ext:pdf` | Extension filter (repeatable = OR); leading dot optional | `ext:pdf ext:docx` |
 | `size:>10kb` | `>`, `<`, or bare for exact; units `b`/`kb`/`mb`/`gb` | `size:<2mb` |
 | `dm:<7d` | Modified **within** the last 7 days; `dm:>30d` = older than 30 days; bare `dm:7d` = within 7 days | `dm:<30d` |
-| `path:` | Match against the full path, not just the filename | `path:Downloads` |
+| `path:` | Full-path mode — `path:Downloads` means the same as `Downloads path:` | `path:Downloads` |
 
 Combine freely:
 
@@ -165,13 +165,16 @@ Combine freely:
 rep* ext:pdf size:>10kb dm:<30d path:projects
 ```
 
-- **Tab** completes directive prefixes at the end of the box: `ex`→`ext:`,
-  `si`→`size:`, `dm`→`dm:`.
+- **Tab** completes directives — with a live suggestion list: `ex`→`ext:`,
+  `p`→`path:`, and after `ext:` real extensions from your own index.
+  Directives glow **amber** and values **cyan** right inside the search box.
 - Exact filename matches get a ★ and rank first; matched letters glow amber.
 - **There is no `sort:` token** — sorting is a setting (rank / name / date /
   size), not query syntax.
-- `path:` must be the **whole token**. `path:` works; `path:something` is
-  treated as ordinary text.
+- Multiple free-text words each match independently: `invoice 2024` finds
+  `invoice-2024.pdf` regardless of word order — every term must appear
+  *somewhere*.
+- `path:` works bare (`report-final path:`) or with a value (`path:Downloads`).
 
 Full reference: [docs/USAGE.md](docs/USAGE.md).
 

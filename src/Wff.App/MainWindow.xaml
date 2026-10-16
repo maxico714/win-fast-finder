@@ -15,11 +15,24 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto" MaxHeight="320"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
+            <!-- Read-only twin of the search box: renders the same text with
+                 directives highlighted keyword-style. The real TextBox sits on
+                 top with transparent text so typing, caret, selection and IME
+                 behave exactly as before. -->
+            <ScrollViewer x:Name="OverlayScroll" HorizontalScrollBarVisibility="Hidden"
+                          VerticalScrollBarVisibility="Disabled" Focusable="False"
+                          IsHitTestVisible="False">
+                <TextBlock x:Name="QueryOverlay" FontSize="18" Padding="8,8,40,8"
+                           TextWrapping="NoWrap" VerticalAlignment="Center"/>
+            </ScrollViewer>
             <TextBox x:Name="QueryBox" FontSize="18" Padding="8,8,40,8"
+                     Foreground="Transparent" Background="Transparent"
+                     CaretBrush="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
                      TextChanged="QueryBox_TextChanged" KeyDown="QueryBox_KeyDown"
                      PreviewKeyDown="QueryBox_PreviewKeyDown"/>
             <TextBlock x:Name="Placeholder" FontSize="18" Padding="10,8,40,8"
@@ -34,15 +47,32 @@
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Button>
         </Grid>
-        <TextBlock x:Name="HintBar" Grid.Row="1" Margin="2,4,2,2" FontSize="11"
+        <!-- Directive/value autocomplete: keyboard stays in the search box. -->
+        <ListBox x:Name="SuggestBox" Grid.Row="1" Margin="2,4,2,0" FontSize="13"
+                 MaxHeight="168" Visibility="Collapsed" Focusable="False"
+                 Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 PreviewMouseLeftButtonUp="SuggestBox_Click">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Display}" FontFamily="Consolas"
+                                   FontWeight="Bold" Foreground="#FFB900" Width="120"/>
+                        <TextBlock Text="{Binding Description}" Opacity="0.65"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock x:Name="HintBar" Grid.Row="2" Margin="2,4,2,2" FontSize="11"
                    Opacity="0.6" Visibility="Collapsed"
-                   Text="*.pdf   ext:pdf   size:&gt;1mb   dm:&lt;7d   — Tab completes directives"/>
-        <ListBox x:Name="Hits" Grid.Row="2" FontSize="13" Margin="0,4,0,0" MaxHeight="300"
+                   Text="*.pdf   ext:pdf   size:&gt;1mb   dm:&lt;7d   path:Downloads — Tab completes, ↑↓ + Tab accept"/>
+        <ListBox x:Name="Hits" Grid.Row="3" FontSize="13" Margin="0,4,0,0" MaxHeight="300"
                  Visibility="Collapsed"
                  VirtualizingStackPanel.IsVirtualizing="True"
                  VirtualizingStackPanel.VirtualizationMode="Recycling"
                  MouseDoubleClick="Hits_DoubleClick"/>
-        <DockPanel x:Name="BottomBar" Grid.Row="3" LastChildFill="False" Margin="0,4,0,0"
+        <DockPanel x:Name="BottomBar" Grid.Row="4" LastChildFill="False" Margin="0,4,0,0"
                    Visibility="Collapsed">
             <TextBlock x:Name="Status" DockPanel.Dock="Left" Opacity="0.6" Text="starting…"/>
             <Button Content="Resync" DockPanel.Dock="Right" Click="Resync_Click" Padding="10,0" Margin="0,0,8,0"/>

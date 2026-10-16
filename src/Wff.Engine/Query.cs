@@ -32,6 +32,13 @@ public static class QueryParser
             var t = tok.ToLowerInvariant();
             if (t == "path:")
                 matchPath = true;
+            else if (t.StartsWith("path:") && t.Length > 5)
+            {
+                // path:Downloads == Downloads + full-path mode. Value is
+                // plain text (no wildcards); matched as subsequence.
+                matchPath = true;
+                text.Add(tok[5..]);
+            }
             else if (t.StartsWith("ext:") && t.Length > 4)
                 exts.Add(t[4..].TrimStart('.'));
             else if (t.StartsWith("size:") && TrySize(t[5..], out var lo, out var hi))

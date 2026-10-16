@@ -28,11 +28,30 @@ type. It follows your Windows theme (System / Light / Dark).
 | Key | Action |
 |---|---|
 | Any text | Debounced 50 ms search, top `MaxResults` (default 50) shown |
-| **Tab** (at end of text) | Completes directive prefixes: `ex`→`ext:`, `si`→`size:`, `dm`→`dm:` |
-| **Enter** | Opens the selected file (falls back to the first result) |
+| **Tab** (at end of text) | Accepts the highlighted suggestion, else completes directive prefixes: `ex`→`ext:`, `si`→`size:`, `dm`→`dm:`, `p`→`path:` |
+| **↑ ↓** (suggestions open) | Move through the suggestion list |
+| **Esc** (suggestions open) | Dismisses the list (popup stays) |
+| **Enter** | Opens the selected file (falls back to the first result) — never accepts a suggestion |
 | **Double-click** | Opens the row you clicked |
 | **Esc** | Hides the popup |
 | Arrow keys | Move the selection (standard listbox navigation) |
+
+### Search-box highlighting and suggestions
+
+Directives are highlighted **inside the search box** as you type:
+directive names (`ext:`, `size:`, `dm:`, `path:`) glow **amber**, values and
+globs glow **cyan**, free text stays normal. What you see is what the parser
+sees — if it is not amber, it is not a directive.
+
+Typing a directive prefix opens a suggestion list under the box:
+
+- `ex` → `ext:`, `si` → `size:`, `dm` → `dm:`, `p` → `path:`, each with a
+  one-line description.
+- After a complete `ext:`, the list offers **extensions from your own
+  index**, most frequent first (`ext:p` → `ext:pdf` with its file count).
+  Other directives take free-form values, so no list is shown for them.
+- **Tab** (or click) accepts; **↑↓** move; **Esc** dismisses; **Enter** always
+  opens the selected file.
 
 ## Query syntax
 
@@ -93,17 +112,25 @@ Days only; computed against UTC.
 
 ### `path:` — match the full path
 
+Two equivalent forms. Bare `path:` switches free-text matching from
+filenames to full paths:
+
+```
+report-final path:
+```
+
+Or attach the value directly — `path:Downloads` means exactly the same as
+`Downloads path:`:
+
 ```
 path:Downloads
 path:src\Wff.Engine
 ```
 
-When present, free text is matched against the whole path instead of just the
-filename.
-
-> **`path:` must be the entire token.** `path:Downloads` is *not* parsed as a
-> path directive — the parser accepts the bare token `path:` only, so
-> `path:Downloads` falls through to ordinary free-text matching.
+The value is plain text (no wildcards) and matches case-insensitively by
+subsequence, like all free text. Multiple free-text terms each match
+independently — `invoice 2024` finds `invoice-2024.pdf` regardless of word
+order, because *every* term must appear *somewhere*.
 
 ### `sort:` — does not exist
 

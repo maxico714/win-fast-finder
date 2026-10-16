@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- In-box keyword highlighting: directive names glow amber, values and globs
+  cyan, as you type — what you see is what the parser sees.
+- Autocomplete suggestion list: directive names for a prefix (`ex`→`ext:`),
+  index-backed `ext:` values with file counts; Tab/click accepts, ↑↓ move,
+  Esc dismisses, Enter always opens the file.
+- `SizeFormat` helper and per-row file sizes in results; the size glows amber
+  while a `size:` filter is active.
+- `path:value` directive form (`path:Downloads` ≡ `Downloads path:`).
+- Multi-term queries use AND semantics in any order (`invoice 2024` finds
+  `invoice-2024.pdf`).
+- Size/date filters now test every candidate instead of the first 500 scored.
+- Installer stub ships single-file (bare apphosts die without their DLLs);
+  packaging refuses a non-single-file stub and wipes stale publish dirs.
 - Public open-source release: MIT licence, documentation set, CI workflows,
   contributing/security/support guides.
 - `tests/e2e/Invoke-WffE2E.ps1` — synthetic-keypress harness proving
