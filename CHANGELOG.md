@@ -139,6 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `RegisterHotKey`, and headless `--index` / `--query` mode.
 - Measured baseline on a 5 142-file tree: index 699 ms, query 4 ms.
 
-[Unreleased]: https://github.com/maxico714/win-fast-finder/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/maxico714/win-fast-finder/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/maxico714/win-fast-finder/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/maxico714/win-fast-finder/compare/v0.1.0...v1.0.1
 [0.1.0]: https://github.com/maxico714/win-fast-finder/releases/tag/v0.1.0

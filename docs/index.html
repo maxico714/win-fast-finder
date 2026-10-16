@@ -39,7 +39,7 @@
   "operatingSystem": "Windows 10, Windows 11",
   "applicationCategory": "UtilitiesApplication",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-  "softwareVersion": "1.0.1",
+  "softwareVersion": "1.0.2",
   "fileSize": "240KB",
   "license": "https://opensource.org/licenses/MIT",
   "isAccessibleForFree": true,
@@ -408,13 +408,13 @@ footer{margin-top:80px;border-top:1px solid var(--line);background:var(--bg2)}
         <strong>no cloud, no telemetry and no admin rights</strong>.
       </p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="https://github.com/maxico714/win-fast-finder/releases">↓ Download v1.0.1</a>
+        <a class="btn btn-primary" href="https://github.com/maxico714/win-fast-finder/releases">↓ Download v1.0.2</a>
         <a class="btn btn-ghost" href="https://github.com/maxico714/win-fast-finder">View source on GitHub</a>
       </div>
       <div class="stats" aria-label="Project statistics">
         <div class="stat"><b>~240 KB</b><span>tiny app, zero third-party runtime deps</span></div>
         <div class="stat"><b>~6 ms</b><span>typical query over 274k files</span></div>
-        <div class="stat"><b>62 / 62</b><span>automated tests passing</span></div>
+        <div class="stat"><b>207 / 207</b><span>automated tests passing</span></div>
         <div class="stat"><b>MIT</b><span>read, build &amp; modify freely</span></div>
       </div>
     </div>
@@ -542,8 +542,8 @@ footer{margin-top:80px;border-top:1px solid var(--line);background:var(--bg2)}
     <h2 id="install-h">Installed in under a minute</h2>
   </div>
   <ol class="steps reveal">
-    <li><b>Download the installer</b><p><code>win-fast-finder-Setup-1.0.1.exe</code> from <a href="https://github.com/maxico714/win-fast-finder/releases">GitHub Releases</a>.</p></li>
-    <li><b>Verify the checksum</b><p>Run <code>Get-FileHash .\win-fast-finder-Setup-1.0.1.exe -Algorithm SHA256</code> and compare against the <code>.sha256</code> file on the release page.</p></li>
+    <li><b>Download the installer</b><p><code>win-fast-finder-Setup-1.0.2.exe</code> from <a href="https://github.com/maxico714/win-fast-finder/releases">GitHub Releases</a>.</p></li>
+    <li><b>Verify the checksum</b><p>Run <code>Get-FileHash .\win-fast-finder-Setup-1.0.2.exe -Algorithm SHA256</code> and compare against the <code>.sha256</code> file on the release page.</p></li>
     <li><b>Run it</b><p>It elevates <strong>once</strong> (default <code>C:\Program Files</code>), checks for the .NET 8 Desktop Runtime <em>before copying anything</em>, then adds a Start Menu entry and optional autostart.</p></li>
     <li><b>Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> and type</b><p>First run indexes your user profile. Add more roots in Settings for full-drive search.</p></li>
   </ol>
@@ -566,13 +566,13 @@ footer{margin-top:80px;border-top:1px solid var(--line);background:var(--bg2)}
   <div class="cards">
     <article class="card reveal">
       <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg></div>
-      <h3>62 / 62 tests green</h3>
+      <h3>207 / 207 tests green</h3>
       <p>Unit, integration and end-to-end tests — including a real-harness proof that drives the GUI with synthetic <code>SendInput</code> keypresses. New behaviour needs a failing-first test.</p>
     </article>
     <article class="card reveal">
       <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.06-.4.1-.8.1-1.2z"/></svg></div>
       <h3>Automated releases</h3>
-      <p>CI builds and tests every push; tagged releases produce a signed installer plus SHA-256 checksums and a source archive through a one-command packaging script.</p>
+      <p>CI builds and tests every push; tagged releases produce the installer plus SHA-256 checksums and a source archive through a one-command packaging script. (Not code-signed — SmartScreen may warn; checksums let you verify.)</p>
     </article>
     <article class="card reveal">
       <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></div>

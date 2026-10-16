@@ -41,6 +41,18 @@ licence.*
 | Install | UAC wizard, runtime-compatibility gate, validated install directory, Start Menu entry, Apps entry, silent uninstall |
 | Assurance | 62 mutation-verified tests, synthetic-keypress E2E, zero network code, adversarial input suite |
 
+## What v1.0.2 delivers (stable)
+
+Everything v1.0.1 promised, finished to the documented spec:
+
+| Area | Delivered |
+|---|---|
+| Query grammar | Full `size:` (`>=` `<=` `=` decimals short-units ranges spaced-units) and `dm:` (hours/weeks/months/years, `today`, absolute days, ranges) grammars; `[AND]`/`[OR]` logic; `path:value`; invalid directives reported, never silent |
+| Engine | Size + mtime in the index (cache v2); filters and sorts over the whole match set; true totals; per-keystroke cancellation |
+| Search UX | In-box amber/cyan/red highlighting, autocomplete with index-backed values, per-row sizes, `N of M` totals, cheat-sheet window |
+| Settings | Exact-size mode, unit base, date zone, totals/size toggles, filter delay, slow-query log, Quick/Deep refresh, results to 1000 |
+| Install | OS + runtime compatibility gate (Install disabled until green), dynamic versions everywhere, single-file stub |
+
 ## Non-goals
 
 These are deliberately out of scope:

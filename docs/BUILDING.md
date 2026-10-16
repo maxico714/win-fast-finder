@@ -109,7 +109,7 @@ not add one back.
 This runs, in order:
 
 1. `dotnet build Wff.sln --no-incremental` (must be 0 errors)
-2. `dotnet test --no-build` (must be 62/62)
+2. `dotnet test --no-build` (must be 207/207)
 3. Publish `Wff.App` framework-dependent, single-file → `dist\win-fx`
 4. Publish `Wff.Setup` framework-dependent → `dist\setup-fx`
 5. Assemble `payload-slim.zip` (app exe + LICENSE)

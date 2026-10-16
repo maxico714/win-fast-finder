@@ -3,16 +3,20 @@
 SemVer + Keep-a-Changelog from day one. Version is centralised in
 `Directory.Build.props`.
 
-## Current — v1.0.1 (released)
+## Current — v1.0.2 (released)
 
-Core value is shipped and proven:
+Core value is shipped and proven, filters finished to the documented spec:
 
-- Parallel index walk, binary cache, incremental refresh
-- Fuzzy + glob + `ext:` / `size:` / `dm:` / `path:` search
+- Parallel index walk, binary cache (v2: paths + sizes + mtimes),
+  incremental refresh (Quick/Deep)
+- Fuzzy + glob + full `ext:` / `size:` / `dm:` / `path:` grammars,
+  `[AND]` / `[OR]` logic, multi-term AND, invalid-directive feedback
+- Search over the whole match set (no caps), true totals, cancellation
 - Configurable `RegisterHotKey` hotkey + optional Ctrl double-tap
-- Borderless popup, System/Light/Dark themes, amber highlighting
-- Full settings surface, UAC installer, silent uninstall
-- 62 mutation-verified tests + synthetic-keypress E2E
+- Borderless popup, System/Light/Dark themes, amber/cyan/red highlighting,
+  autocomplete with index-backed values
+- Full settings surface, compat-gated UAC installer, silent uninstall
+- 207 mutation-verified tests + synthetic-keypress E2E
 - Zero network code, zero third-party runtime dependencies
 
 ## Next — v1.1.x (stability and polish)
@@ -20,8 +24,7 @@ Core value is shipped and proven:
 | Item | Why |
 |---|---|
 | Code-sign the installer | The single biggest trust gap; needs funding |
-| CI-produced release artifacts | Today `build/package.ps1` is manual |
-| Query syntax sugar: `sort:` token, `path:value` | Currently two documented sharp edges |
+| Result previews (thumbnail / metadata pane) | Makes the popup more useful without leaving it |
 | Result previews (thumbnail / metadata pane) | Makes the popup more useful without leaving it |
 | Keyboard navigation polish (PageUp/PageDown, jump-to-letter) | Power-user ergonomics |
 | Localisation of the UI | Settings window and hint bar are English-only |

@@ -107,11 +107,11 @@ a download link if it is missing.
 
 ## Install
 
-1. Download **`win-fast-finder-Setup-1.0.1.exe`** from
+1. Download **`win-fast-finder-Setup-1.0.2.exe`** from
    [Releases](https://github.com/maxico714/win-fast-finder/releases).
 2. Verify the checksum (optional but good practice):
    ```powershell
-   Get-FileHash .\win-fast-finder-Setup-1.0.1.exe -Algorithm SHA256
+    Get-FileHash .\win-fast-finder-Setup-1.0.2.exe -Algorithm SHA256
    ```
    Compare against the `.sha256` file on the release page.
 3. Run the installer. It elevates **once** (default `C:\Program Files`),
@@ -274,7 +274,7 @@ Full guide: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ```sh
 dotnet build Wff.sln --no-incremental
-dotnet test tests/Wff.Tests/Wff.Tests.csproj     # 62 tests
+dotnet test tests/Wff.Tests/Wff.Tests.csproj     # 207 tests
 dotnet run --project src/Wff.App                  # GUI
 dotnet run --project src/Wff.App -- --index "C:\Dir" --query "name"
 ```
