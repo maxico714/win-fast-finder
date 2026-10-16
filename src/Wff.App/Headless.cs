@@ -16,7 +16,8 @@ public static class Headless
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var settings = Settings.Load();
-        var files = Walker.EnumerateParallel(dir, settings.Blacklist);
+        var files = Walker.EnumerateParallel(dir, settings.Blacklist,
+            skipHiddenSystem: settings.HideHiddenAndSystem);
         var index = FileIndex.Build(files);
         sw.Stop();
         Console.WriteLine($"files={files.Count} index_ms={sw.ElapsedMilliseconds}");
@@ -24,11 +25,14 @@ public static class Headless
         if (query.Length > 0)
         {
             sw.Restart();
-            var hits = index.Search(query, 10);
+            var parsed = QueryParser.Parse(query, new QueryOptions());
+            foreach (var inv in parsed.Invalid)
+                Console.WriteLine("WARN " + inv.Message);
+            var (rows, total) = index.SearchDetailed(parsed, 10);
             sw.Stop();
-            Console.WriteLine($"query_ms={sw.ElapsedMilliseconds} hits={hits.Count}");
-            foreach (var h in hits)
-                Console.WriteLine("HIT " + h);
+            Console.WriteLine($"query_ms={sw.ElapsedMilliseconds} hits={rows.Count} total={total}");
+            foreach (var r in rows)
+                Console.WriteLine("HIT " + r.Path);
         }
         return 0;
     }

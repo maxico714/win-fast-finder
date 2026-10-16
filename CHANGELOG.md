@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Full `size:` grammar: `>=` `<=` `=`, decimals (`1.5gb`), short units
+  (`k m g t`), `tb`, ranges (`1mb..5mb`), spaced units (`size:>1 gb`).
+- Full `dm:` grammar: hours/weeks/months/years (`dm:<12h`), `today` /
+  `yesterday`, absolute ISO days (`dm:2024-05-10` = whole local day),
+  date ranges, `>=` / `<=` / `=`.
+- Bare `size:` follows Settings → Search → **Exact size**: Displayed size
+  like Explorer (default), Exact bytes, or ±1%. New `=` form is always
+  byte-exact.
+- Invalid directives glow **red** with a status-line reason instead of
+  failing silently; amber always means "understood".
+- Size + modified time stored in the index (cache format v2, old caches
+  rebuild automatically): filters and sorts run fully in-memory.
+- Sorting runs over the **whole** match set (the 20,000 scored cap is gone);
+  optional `N of M` total in the status line; max results up to 1000.
+- Search cancellation per keystroke, longer debounce for directive queries,
+  optional slow-query logging.
+- Settings: exact-size mode, binary/decimal units, local/UTC days, total
+  count, size badge toggle, filter delay, slow-query log, Quick/Deep
+  refresh, query cheat-sheet window, live version line.
 - In-box keyword highlighting: directive names glow amber, values and globs
   cyan, as you type — what you see is what the parser sees.
 - Autocomplete suggestion list: directive names for a prefix (`ex`→`ext:`),
@@ -31,6 +50,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   metadata.
 
 ### Fixed
+- The "Hide hidden and system files" setting was dead (never passed to the
+  walker); it is now honoured at index time.
+- Version bumped to 1.0.2 everywhere (assembly, installer manifest,
+  registry DisplayVersion, settings version line) so builds are tellable.
+- `QueryHint` extension suggestions now share `ExtensionScan` (last-dot:
+  `archive.tar.gz` suggests `gz`, with counts matching Settings).
 - Startup no longer depends on the `Loaded` event. A never-shown hidden
   window may never raise it, which left hotkeys and indexing silently dead.
   `App.OnStartup` now drives `EnsureReady()` explicitly, showing the window

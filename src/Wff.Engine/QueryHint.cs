@@ -58,29 +58,12 @@ public static class QueryHint
     }
 
     // Distinct extensions across indexed paths, most frequent first.
-    // Multi-dot names contribute the full tail ("archive.tar.gz" -> "tar.gz").
-    public static List<(string Ext, int Count)> TopExtensions(IEnumerable<string> paths)
-    {
-        var freq = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var p in paths)
-        {
-            var name = p.Replace('/', '\\');
-            int slash = name.LastIndexOf('\\');
-            if (slash >= 0)
-                name = name[(slash + 1)..];
-            int dot = name.IndexOf('.');
-            if (dot < 0)
-                continue;
-            var ext = name[(dot + 1)..].ToLowerInvariant();
-            if (ext.Length == 0)
-                continue;
-            freq[ext] = freq.TryGetValue(ext, out var c) ? c + 1 : 1;
-        }
-        return freq.OrderByDescending(kv => kv.Value)
-            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
-            .Select(kv => (kv.Key, kv.Value))
+    // Delegates to ExtensionScan (last-dot semantics: "archive.tar.gz"
+    // suggests "gz"), so suggestions and the settings list always agree.
+    public static List<(string Ext, int Count)> TopExtensions(IEnumerable<string> paths) =>
+        ExtensionScan.TopExtensions(paths, 300)
+            .Select(t => (t.Extension.TrimStart('.').ToLowerInvariant(), t.Count))
             .ToList();
-    }
 
     public static List<Suggestion> SuggestExtensions(
         IEnumerable<string> paths, string prefixLower, int max = 8)

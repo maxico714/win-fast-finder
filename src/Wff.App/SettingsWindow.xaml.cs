@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using Wff.Engine;
@@ -47,6 +48,33 @@ public partial class SettingsWindow : Window
         PathBox.IsChecked = _settings.MatchPath;
         SelectBox(SortBox, _settings.SortMode);
         HiddenBox.IsChecked = _settings.HideHiddenAndSystem;
+        SelectTag(SizeModeBox, _settings.ExactSizeMode);
+        SelectTag(UnitBox, _settings.SizeDecimalUnits ? "True" : "False");
+        SelectTag(DateZoneBox, _settings.DateUseLocalTime ? "True" : "False");
+        TotalBox.IsChecked = _settings.ShowTotalMatches;
+        SizeBox.IsChecked = _settings.ShowFileSize;
+        DelayBox.Text = _settings.FilterDebounceMs.ToString();
+        SlowBox.IsChecked = _settings.LogSlowQueries;
+    }
+
+    private void SelectTag(ComboBox box, string tag)
+    {
+        foreach (ComboBoxItem item in box.Items)
+        {
+            if ((item.Tag as string)?.Equals(tag, StringComparison.OrdinalIgnoreCase) == true)
+            {
+                box.SelectedItem = item;
+                return;
+            }
+        }
+        box.SelectedIndex = 0;
+    }
+
+    private static string SelectedTag(ComboBox box, string fallback)
+    {
+        if (box.SelectedItem is ComboBoxItem item && item.Tag is string tag)
+            return tag;
+        return fallback;
     }
 
     private static void SelectBox(ComboBox box, string value)
@@ -66,6 +94,7 @@ public partial class SettingsWindow : Window
     private void LoadIndex(IReadOnlyList<string>? indexedPaths, string statsLine)
     {
         StatsLine.Text = statsLine;
+        SelectBox(RefreshBox, _settings.RefreshMode);
         try { BuildDriveBoxes(); }
         catch (Exception ex) { Logger.Info("drive list failed: " + ex.Message); }
         FolderList.ItemsSource = new System.Collections.ObjectModel.ObservableCollection<string>(
@@ -165,7 +194,20 @@ public partial class SettingsWindow : Window
     // ---- Advanced ----
     private void LoadAdvanced()
     {
-        VersionLine.Text = "win-fast-finder 0.8.0 — MIT — zero dependencies";
+        string v = "1.0.2";
+        try
+        {
+            v = typeof(Settings).Assembly
+                    .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
+                    ?.InformationalVersion ?? v;
+        }
+        catch { }
+        VersionLine.Text = $"win-fast-finder {v} — MIT — zero third-party runtime dependencies";
+    }
+
+    private void CheatSheet_Click(object sender, RoutedEventArgs e)
+    {
+        new CheatSheetWindow { Owner = this }.ShowDialog();
     }
 
     private void Export_Click(object sender, RoutedEventArgs e)
@@ -260,9 +302,17 @@ public partial class SettingsWindow : Window
                 exts.Add(ext);
         int max = 50;
         if (MaxBox.SelectedItem is ComboBoxItem mi && int.TryParse(mi.Content as string, out int m))
-            max = m;
+            max = Math.Clamp(m, 1, 200);
         string sort = (SortBox.SelectedItem as ComboBoxItem)?.Content as string ?? "rank";
         string theme = (ThemeBox.SelectedItem as ComboBoxItem)?.Content as string ?? "System";
+        int delay = 250;
+        DelayError.Visibility = Visibility.Collapsed;
+        if (!int.TryParse(DelayBox.Text.Trim(), out delay) || delay < 50 || delay > 2000)
+        {
+            DelayError.Text = "Delay must be 50–2000 ms; using 250.";
+            DelayError.Visibility = Visibility.Visible;
+            delay = 250;
+        }
         return new Settings
         {
             LaunchAtLogin = LaunchBox.IsChecked == true,
@@ -274,6 +324,15 @@ public partial class SettingsWindow : Window
             MatchPath = PathBox.IsChecked == true,
             SortMode = sort,
             HideHiddenAndSystem = HiddenBox.IsChecked == true,
+            ExactSizeMode = SelectedTag(SizeModeBox, "DisplayedSize"),
+            SizeDecimalUnits = SelectedTag(UnitBox, "False") == "True",
+            DateUseLocalTime = SelectedTag(DateZoneBox, "True") == "True",
+            ShowTotalMatches = TotalBox.IsChecked == true,
+            ShowFileSize = SizeBox.IsChecked == true,
+            FilterDebounceMs = delay,
+            LogSlowQueries = SlowBox.IsChecked == true,
+            RefreshMode = (RefreshBox.SelectedItem as ComboBoxItem)?.Content as string == "Deep"
+                ? "Deep" : "Quick",
             Blacklist = ((System.Collections.ObjectModel.ObservableCollection<string>)FolderList.ItemsSource).ToList(),
             WhitelistRoots = ((System.Collections.ObjectModel.ObservableCollection<string>)WhiteList.ItemsSource).ToList(),
             IgnoredDrives = drives,

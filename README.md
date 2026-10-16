@@ -155,8 +155,8 @@ directive names are case-insensitive.
 | `report` | Subsequence match on filenames (`report` matches `my **repo**rt.pdf`) | `invoice` |
 | `*.pdf` | Glob (`*` any run, `?` one character) | `2024-*.xlsx` |
 | `ext:pdf` | Extension filter (repeatable = OR); leading dot optional | `ext:pdf ext:docx` |
-| `size:>10kb` | `>`, `<`, or bare for exact; units `b`/`kb`/`mb`/`gb` | `size:<2mb` |
-| `dm:<7d` | Modified **within** the last 7 days; `dm:>30d` = older than 30 days; bare `dm:7d` = within 7 days | `dm:<30d` |
+| `size:>10kb` | `>` `<` `>=` `<=` `=` or bare; decimals; units `b k kb m mb g gb t tb`; ranges (`1mb..5mb`) | `size:<=2mb` |
+| `dm:<7d` | Relative (`h d w m y`), `today`/`yesterday`, absolute ISO days, ranges | `dm:<12h` |
 | `path:` | Full-path mode — `path:Downloads` means the same as `Downloads path:` | `path:Downloads` |
 
 Combine freely:
@@ -175,6 +175,11 @@ rep* ext:pdf size:>10kb dm:<30d path:projects
   `invoice-2024.pdf` regardless of word order — every term must appear
   *somewhere*.
 - `path:` works bare (`report-final path:`) or with a value (`path:Downloads`).
+- Broken directives glow **red** and the status line explains them
+  (`size:abc — try size:>10mb`) — filters never fail silently.
+- Result rows show the file size; with a `size:` filter the size glows amber.
+- Sorting runs over the whole match set; the status can show `50 of 312
+  matches` (Settings → Search).
 
 Full reference: [docs/USAGE.md](docs/USAGE.md).
 
@@ -322,6 +327,15 @@ walkthrough in [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 **Can I uninstall cleanly?**
 Yes — run `Uninstall.exe`, or use Windows Settings → Apps. It removes the app,
 data, shortcuts, autostart entry and registry keys.
+
+**What does bare `size:1mb` match?**
+Whatever Settings → Search → **Exact size** says: **Displayed size** like
+Explorer (default), **Exact bytes**, or **±1%**. Use `size:=1mb` when you mean
+exactly 1,048,576 bytes no matter the setting.
+
+**Why is my directive red?**
+It did not parse (`size:abc`, `dm:xyz`). Red never searches silently — the
+status line tells you the expected form. Amber always means "understood".
 
 ## Documentation
 

@@ -76,7 +76,8 @@ public static class Incremental
 
     public static List<string> Refresh(List<string> oldFiles,
         Dictionary<string, long> snapshot, IEnumerable<string> roots,
-        IEnumerable<string> blacklist, Action<string>? onDirScanned = null)
+        IEnumerable<string> blacklist, Action<string>? onDirScanned = null,
+        bool skipHiddenSystem = true)
     {
         var skip = new HashSet<string>(blacklist ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
         var result = new List<string>();
@@ -137,7 +138,7 @@ public static class Incremental
             foreach (var s in stale)
             {
                 onDirScanned?.Invoke(s);
-                result.AddRange(Walker.Enumerate(s, skip));
+                result.AddRange(Walker.Enumerate(s, skip, skipHiddenSystem));
             }
         }
         return result.Distinct(StringComparer.OrdinalIgnoreCase).ToList();

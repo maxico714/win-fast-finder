@@ -31,6 +31,19 @@ public sealed class Settings
     public bool MatchPath { get; set; } = false;
     public string SortMode { get; set; } = "rank"; // rank|name|date|size
     public bool HideHiddenAndSystem { get; set; } = true;
+    // Bare size: syntax: ExactBytes | DisplayedSize (Explorer-like) | Percent1.
+    public string ExactSizeMode { get; set; } = "DisplayedSize";
+    // Size units + display: false = binary (1 KB = 1024), true = decimal.
+    public bool SizeDecimalUnits { get; set; } = false;
+    // Absolute dates (dm:2024-05-10, today): true = local day, false = UTC.
+    public bool DateUseLocalTime { get; set; } = true;
+    public bool ShowTotalMatches { get; set; } = false;
+    public bool ShowFileSize { get; set; } = true;
+    // Debounce for queries containing a directive (plain text stays 50 ms).
+    public int FilterDebounceMs { get; set; } = 250;
+    public bool LogSlowQueries { get; set; } = false;
+    // Startup refresh: Quick (mtime check) or Deep (full rebuild).
+    public string RefreshMode { get; set; } = "Quick";
     public string Theme { get; set; } = "System"; // System|Light|Dark
     public bool LaunchAtLogin { get; set; } = false;
 

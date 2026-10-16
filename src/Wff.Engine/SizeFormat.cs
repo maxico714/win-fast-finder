@@ -4,16 +4,19 @@ namespace Wff.Engine;
 
 public static class SizeFormat
 {
-    public static string FormatBytes(long bytes)
+    public static string FormatBytes(long bytes) => FormatBytes(bytes, false);
+
+    public static string FormatBytes(long bytes, bool decimalUnits)
     {
         if (bytes < 0)
             bytes = 0;
-        if (bytes < 1024)
+        long step = decimalUnits ? 1000 : 1024;
+        if (bytes < step)
             return $"{bytes} B";
-        double v = bytes / 1024.0;
+        double v = bytes / (double)step;
         string unit = "KB";
-        if (Math.Round(v, 1) >= 1024) { v /= 1024; unit = "MB"; }
-        if (Math.Round(v, 1) >= 1024) { v /= 1024; unit = "GB"; }
+        if (Math.Round(v, 1) >= step) { v /= step; unit = "MB"; }
+        if (Math.Round(v, 1) >= step) { v /= step; unit = "GB"; }
         v = Math.Round(v, 1);
         return v % 1 == 0 ? $"{v:0} {unit}" : $"{v:0.#} {unit}";
     }

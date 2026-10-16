@@ -1,0 +1,45 @@
+<Window x:Class="Wff.App.CheatSheetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Query cheat sheet" Height="480" Width="560"
+        WindowStartupLocation="CenterScreen"
+        Icon="{DynamicResource AppLogo}">
+    <DockPanel Margin="12">
+        <Button DockPanel.Dock="Bottom" Content="Close" Padding="16,2"
+                HorizontalAlignment="Right" Margin="0,8,0,0" IsCancel="True"/>
+        <TextBox FontFamily="Consolas" FontSize="13" IsReadOnly="True"
+                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                 Text="Free text (every word must match, any order):
+  invoice 2024
+
+Globs (* = any run, ? = one character):
+  *.pdf   2024-*.xlsx
+
+Extensions (repeatable = OR, Tab completes, values suggested):
+  ext:pdf   ext:pdf ext:docx   ext:.PDF
+
+Sizes (units b k kb m mb g gb t tb; 'size:&gt;1 gb' works):
+  size:&gt;10mb   size:&lt;2mb
+  size:&gt;=1mb   size:&lt;=1mb   size:=1mb
+  size:1mb        (bare = your Exact-size setting)
+  size:1.5gb   size:0.5mb
+  size:1mb..5mb  (range, inclusive)
+
+Dates (dm:2024-05-10 is the whole local day):
+  dm:&lt;7d   dm:7d   dm:&gt;30d      (units h d w m y)
+  dm:&lt;12h   dm:&lt;2w   dm:&lt;3m
+  dm:today   dm:yesterday
+  dm:2024-05-10   dm:&gt;2024-05-01   dm:&lt;2024-05-01
+  dm:2024-05-01..2024-05-31
+
+Full path:
+  path:Downloads   (= Downloads + full-path mode)
+  report-final path:
+
+Combine freely — all filters must pass:
+  rep* ext:pdf size:&gt;10kb dm:&lt;30d path:projects
+
+Broken directives glow red and explain in the status line.
+There is no sort: token — sorting is Settings -&gt; Search."/>
+    </DockPanel>
+</Window>

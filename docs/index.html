@@ -122,6 +122,16 @@
       "@type": "Question",
       "name": "Can I uninstall Win Fast Finder cleanly?",
       "acceptedAnswer": { "@type": "Answer", "text": "Yes. Run Uninstall.exe or use Windows Settings, Apps. It removes the app, data, shortcuts, autostart entry and registry keys." }
+    },
+    {
+      "@type": "Question",
+      "name": "What does bare size:1mb match?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Whatever Settings, Search, Exact size says: Displayed size like Explorer (default), Exact bytes, or within 1 percent. Use size:=1mb for exactly 1,048,576 bytes." }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is my directive red?",
+      "acceptedAnswer": { "@type": "Answer", "text": "It did not parse, for example size:abc. Red never searches silently: the status line tells you the expected form. Amber always means understood." }
     }
   ]
 }
@@ -478,12 +488,12 @@ footer{margin-top:80px;border-top:1px solid var(--line);background:var(--bg2)}
         <tr><td><code>report</code></td><td>Subsequence match on filenames</td><td><code>invoice</code> finds <code>my invoice.pdf</code></td></tr>
         <tr><td><code>*.pdf</code></td><td>Glob — <code>*</code> any run, <code>?</code> one character</td><td><code>2024-*.xlsx</code></td></tr>
         <tr><td><code>ext:pdf</code></td><td>Extension filter, repeatable = OR</td><td><code>ext:pdf ext:docx</code></td></tr>
-        <tr><td><code>size:&gt;10kb</code></td><td>Size filter, units <code>b kb mb gb</code></td><td><code>size:&lt;2mb</code></td></tr>
-        <tr><td><code>dm:&lt;7d</code></td><td>Modified within 7 days (<code>y d m</code>)</td><td><code>dm:&lt;30d</code></td></tr>
+        <tr><td><code>size:&gt;10kb</code></td><td>Size filter: comparisons, decimals, units <code>b k kb m mb g gb t tb</code>, ranges</td><td><code>size:1mb..5mb</code></td></tr>
+        <tr><td><code>dm:&lt;7d</code></td><td>Date filter: relative units, <code>today</code>, absolute ISO days, ranges</td><td><code>dm:2024-05-10</code></td></tr>
         <tr><td><code>path:</code></td><td>Full-path mode — <code>path:Downloads</code> ≡ <code>Downloads path:</code></td><td><code>path:Downloads</code></td></tr>
       </tbody>
     </table>
-    <p style="color:var(--muted);margin:16px 0 0">Press <kbd>Tab</kbd> to complete <code>ex</code>→<code>ext:</code>, <code>si</code>→<code>size:</code>, <code>dm</code>→<code>dm:</code>, <code>p</code> for path: (Tab accepts the suggestion list too). Exact filename matches get a ★ and rank first. Full reference: <a href="https://github.com/maxico714/win-fast-finder/blob/main/docs/USAGE.md">usage guide</a>. In the app's search box, directive names glow amber and values cyan, and a suggestion list offers directives plus real extensions from your index.</p>
+    <p style="color:var(--muted);margin:16px 0 0">Press <kbd>Tab</kbd> to complete <code>ex</code>→<code>ext:</code>, <code>si</code>→<code>size:</code>, <code>dm</code>→<code>dm:</code>, <code>p</code> for path: (Tab accepts the suggestion list too). Exact filename matches get a ★ and rank first. Full reference: <a href="https://github.com/maxico714/win-fast-finder/blob/main/docs/USAGE.md">usage guide</a>. In the app's search box, directive names glow amber and values cyan, and a suggestion list offers directives plus real extensions from your index. Broken directives glow red with an explanation in the status line — filters never fail silently.</p>
   </div>
   <h3 class="sub reveal">Default hotkeys</h3>
   <div class="panel reveal">
@@ -611,6 +621,14 @@ footer{margin-top:80px;border-top:1px solid var(--line);background:var(--bg2)}
     <details class="faq">
       <summary>Can I uninstall cleanly?</summary>
       <div class="a"><p>Yes — run <code>Uninstall.exe</code>, or use Windows Settings → Apps. It removes the app, data, shortcuts, autostart entry and registry keys.</p></div>
+    </details>
+    <details class="faq">
+      <summary>What does bare <code>size:1mb</code> match?</summary>
+      <div class="a"><p>Whatever Settings → Search → <strong>Exact size</strong> says: <strong>Displayed size</strong> like Explorer (default), <strong>Exact bytes</strong>, or <strong>±1%</strong>. Use <code>size:=1mb</code> for exactly 1,048,576 bytes.</p></div>
+    </details>
+    <details class="faq">
+      <summary>Why is my directive red?</summary>
+      <div class="a"><p>It did not parse (<code>size:abc</code>, <code>dm:xyz</code>). Red never searches silently — the status line tells you the expected form. Amber always means "understood".</p></div>
     </details>
   </div>
 </section>

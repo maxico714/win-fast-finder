@@ -10,7 +10,7 @@ namespace Wff.Setup;
 public static class Installer
 {
     public const string AppName = "win-fast-finder";
-    public const string Version = "1.0.0";
+    public const string Version = "1.0.2";
     public const string UninstallKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\win-fast-finder";
     public const string RunKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
     public const string RunValue = "win-fast-finder";

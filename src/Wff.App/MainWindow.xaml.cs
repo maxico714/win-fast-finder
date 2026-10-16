@@ -91,7 +91,8 @@ public partial class MainWindow : Window
             Show();
             RegisterHotKey();
             bool firstRun = !File.Exists(Path.Combine(AppDir(), "cache.bin"));
-            StartBackgroundIndex();
+            // Deep mode skips the incremental shortcut: full rebuild.
+            StartBackgroundIndex(forceFull: _settings.RefreshMode == "Deep");
             if (firstRun)
                 Summon(); // first run: show progress; afterwards stay hidden until hotkey
             else
@@ -157,15 +158,16 @@ public partial class MainWindow : Window
                 {
                     try
                     {
-                        var old = Cache.Load(cachePath);
+                        var cached = Cache.Load(cachePath);
+                        var old = cached.Paths;
                         var snap = SnapshotStore.Load(snapPath);
                         ShowStatus("checking for new files…");
                         files = Incremental.Refresh(old, snap, roots, settings.Blacklist,
-                            d => ShowStatus($"refreshing {d}…"));
+                            d => ShowStatus($"refreshing {d}…"), settings.HideHiddenAndSystem);
                         files = files.Where(f => ExtensionFilter.Keep(f, settings.IgnoredExtensions)).ToList();
                         var newSnap = Incremental.SnapshotRoots(roots, settings.Blacklist);
                         var index = FileIndex.Build(files);
-                        try { Cache.Save(files, cachePath); SnapshotStore.Save(newSnap, snapPath); }
+                        try { Cache.Save(index, cachePath); SnapshotStore.Save(newSnap, snapPath); }
                         catch (Exception ex) { Logger.Info("cache save failed: " + ex.Message); }
                 sw.Stop();
                 Logger.Info($"refreshed {files.Count} files in {sw.ElapsedMilliseconds} ms");
@@ -186,7 +188,7 @@ public partial class MainWindow : Window
                 files = WalkAll(settings, count => ShowStatus($"indexing… {count:N0} files"));
                 var freshSnap = Incremental.SnapshotRoots(roots, settings.Blacklist);
                 var freshIndex = FileIndex.Build(files);
-                try { Cache.Save(files, cachePath); SnapshotStore.Save(freshSnap, snapPath); }
+                try { Cache.Save(freshIndex, cachePath); SnapshotStore.Save(freshSnap, snapPath); }
                 catch (Exception ex) { Logger.Info("cache save failed: " + ex.Message); }
                 sw.Stop();
                 Logger.Info($"indexed {files.Count} files in {sw.ElapsedMilliseconds} ms");
@@ -214,7 +216,8 @@ public partial class MainWindow : Window
         var prog = new InlineCounter(onProgress);
         var all = new List<string>();
         foreach (var root in settings.StartupRoots())
-            foreach (var f in Walker.EnumerateParallel(root, settings.Blacklist, prog))
+            foreach (var f in Walker.EnumerateParallel(root, settings.Blacklist, prog,
+                skipHiddenSystem: settings.HideHiddenAndSystem))
                 if (ExtensionFilter.Keep(f, settings.IgnoredExtensions))
                     all.Add(f);
         prog.Finish(all.Count);
@@ -267,7 +270,7 @@ public partial class MainWindow : Window
         _settings = Settings.Load();
         Theme.Apply(_settings.Theme);
         ReregisterHotKey();
-        StartBackgroundIndex();
+        StartBackgroundIndex(forceFull: _settings.RefreshMode == "Deep");
     }
 
     private static string LastRefresh()
@@ -377,7 +380,15 @@ public partial class MainWindow : Window
             UpdateSuggestions();
         _debounce.Stop();
         if (hasText)
+        {
+            // Directive queries scan more index: give them a longer
+            // keystroke rest than plain text (Settings, default 250 ms).
+            int delay = QueryBox.Text.Contains(':')
+                ? Math.Clamp(_settings.FilterDebounceMs, 50, 2000)
+                : 50;
+            _debounce.Interval = TimeSpan.FromMilliseconds(delay);
             _debounce.Start();
+        }
     }
 
     private void HookBoxScroller()
@@ -410,6 +421,13 @@ public partial class MainWindow : Window
         QueryOverlay.Inlines.Clear();
         var text = QueryBox.Text;
         var normal = SystemColors.WindowTextBrush;
+        var bad = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            foreach (var inv in QueryParser.Parse(text, CurrentQueryOptions()).Invalid)
+                bad.Add(inv.Token);
+        }
+        catch { }
         int i = 0;
         while (i < text.Length)
         {
@@ -424,16 +442,30 @@ public partial class MainWindow : Window
             {
                 int j = i + 1;
                 while (j < text.Length && !char.IsWhiteSpace(text[j])) j++;
-                AppendTokenRuns(text[i..j], normal);
+                AppendTokenRuns(text[i..j], normal, bad);
                 i = j;
             }
         }
         SyncOverlayOffset();
     }
 
-    private void AppendTokenRuns(string token, System.Windows.Media.Brush normal)
+    private static readonly System.Windows.Media.SolidColorBrush RedBrush = MakeBrush(0xF8, 0x71, 0x71);
+
+    private void AppendTokenRuns(string token, System.Windows.Media.Brush normal,
+        HashSet<string> invalidTokens)
     {
         var lower = token.ToLowerInvariant();
+        if (invalidTokens.Contains(token))
+        {
+            // Looks like a directive but does not parse: red, not amber.
+            // Amber keeps its promise — it always means "understood".
+            QueryOverlay.Inlines.Add(new System.Windows.Documents.Run(token)
+            {
+                Foreground = RedBrush,
+                FontWeight = FontWeights.Bold,
+            });
+            return;
+        }
         var split = QueryHint.SplitDirective(lower);
         if (split != null)
         {
@@ -536,28 +568,74 @@ public partial class MainWindow : Window
             AcceptSuggestion(s);
     }
 
+    private CancellationTokenSource? _searchCts;
+
+    private QueryOptions CurrentQueryOptions() => new()
+    {
+        ExactSizeMode = _settings.ExactSizeMode,
+        SizeDecimalUnits = _settings.SizeDecimalUnits,
+        DateUseLocalTime = _settings.DateUseLocalTime,
+    };
+
     private void RunSearch(string q, int id)
     {
         var index = _index;
         if (index == null || string.IsNullOrWhiteSpace(q))
             return;
+        // A new keystroke cancels the previous scan: stale full-index work
+        // dies instead of piling up behind the latest query.
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
         int max = Math.Clamp(_settings.MaxResults, 1, 200);
-        var query = QueryParser.Parse(q);
+        var query = QueryParser.Parse(q, CurrentQueryOptions());
         if (_settings.MatchPath && !query.MatchPath)
             query = query with { MatchPath = true };
         if (query.Sort == "rank" && _settings.SortMode != "rank")
             query = query with { Sort = _settings.SortMode };
         Task.Run(() =>
         {
-            var hits = index.Search(query, max);
-            bool sizeActive = query.MinSizeBytes != null || query.MaxSizeBytes != null;
-            Dispatcher.BeginInvoke(() =>
+            try
             {
-                if (id != _queryId)
-                    return; // stale: a newer keystroke already queued
-                RenderHits(hits, q, sizeActive);
-            });
+                var sw = Stopwatch.StartNew();
+                var (rows, total) = index.SearchDetailed(query, max, token);
+                sw.Stop();
+                if (_settings.LogSlowQueries && sw.ElapsedMilliseconds > 500)
+                    Logger.Info($"slow query ({sw.ElapsedMilliseconds} ms): {q}");
+                bool sizeActive = query.MinSizeBytes != null || query.MaxSizeBytes != null
+                    || query.SizeDisplayTarget != null;
+                Dispatcher.BeginInvoke(() =>
+                {
+                    if (id != _queryId)
+                        return; // stale: a newer keystroke already queued
+                    RenderHits(rows, q, sizeActive, _settings.ShowFileSize);
+                    UpdateResultStatus(rows.Count, total, query);
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // Superseded by a newer keystroke: nothing to render.
+            }
         });
+    }
+
+    private void UpdateResultStatus(int shown, int total, Query query)
+    {
+        // Invalid directives take precedence: the user must see WHY a
+        // filter did nothing instead of guessing.
+        if (query.Invalid.Count > 0)
+        {
+            Status.Text = "⚠ " + query.Invalid[0].Message;
+            return;
+        }
+        if (_settings.ShowTotalMatches)
+        {
+            Status.Text = total == shown
+                ? $"{shown:N0} matches"
+                : $"{shown:N0} of {total:N0} matches";
+        }
+        // Otherwise the index-stats line stays untouched.
     }
 
     private sealed class HitItem
@@ -568,12 +646,13 @@ public partial class MainWindow : Window
         public HashSet<int> Spans { get; init; } = new();
     }
 
-    private void RenderHits(List<string> hits, string query, bool highlightSize)
+    private void RenderHits(List<ResultRow> rows, string query, bool highlightSize, bool showSize)
     {
         var words = HighlightWords(query);
         Hits.Items.Clear();
-        foreach (var h in hits)
+        foreach (var row in rows)
         {
+            string h = row.Path;
             var name = System.IO.Path.GetFileName(h);
             var spans = new HashSet<int>();
             foreach (var w in words)
@@ -604,9 +683,12 @@ public partial class MainWindow : Window
                 Foreground = SystemColors.GrayTextBrush,
                 TextTrimming = TextTrimming.CharacterEllipsis,
             };
-            // Every row shows the file size up front; with a size: filter
-            // active it glows amber like an exact match.
-            string? sizeText = TryGetSize(h);
+            // Every row shows the file size up front (from index metadata,
+            // no syscalls); with a size: filter active it glows amber like
+            // an exact match. Unknown sizes (file vanished) show no badge.
+            string? sizeText = showSize && row.SizeBytes >= 0
+                ? SizeFormat.FormatBytes(row.SizeBytes, _settings.SizeDecimalUnits)
+                : null;
             if (sizeText != null)
             {
                 line2.Inlines.Add(new System.Windows.Documents.Run(sizeText)
@@ -636,14 +718,6 @@ public partial class MainWindow : Window
         }
         if (Hits.Items.Count > 0)
             ((System.Windows.Controls.ListBoxItem)Hits.Items[0]).IsSelected = true;
-    }
-
-    private static string? TryGetSize(string path)
-    {
-        // One stat per visible row (<= MaxResults, default 50): ms-scale.
-        // Missing/unreadable file: size omitted, row still shown.
-        try { return SizeFormat.FormatBytes(new FileInfo(path).Length); }
-        catch { return null; }
     }
 
     private static List<string> HighlightWords(string query)

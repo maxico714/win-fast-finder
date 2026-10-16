@@ -78,8 +78,9 @@ public sealed class QueryHintTests
             @"C:\a\noext",
         };
         var got = QueryHint.SuggestExtensions(paths, "");
-        // pdf x3, docx x2, then tar.gz before txt alphabetically.
-        Assert.Equal(new[] { "pdf", "docx", "tar.gz", "txt" },
+        // pdf x3, docx x2, then gz before txt alphabetically
+        // (last-dot semantics, shared with the settings list).
+        Assert.Equal(new[] { "pdf", "docx", "gz", "txt" },
             got.Select(s => s.Display));
         Assert.Equal("ext:pdf", got[0].Insert);
         Assert.Contains("files", got[0].Description);

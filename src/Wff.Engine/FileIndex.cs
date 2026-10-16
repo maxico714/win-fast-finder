@@ -3,16 +3,23 @@
 // score only candidates -> top-N heap. Never scores all rows per keystroke.
 namespace Wff.Engine;
 
+public sealed record ResultRow(string Path, long SizeBytes, long ModifiedUtcTicks);
+
 public sealed class FileIndex
 {
     private readonly string[] _paths;
     private readonly string[] _names;
+    private readonly long[] _sizes; // bytes, -1 when the file is gone/unreadable
+    private readonly long[] _mtimes; // UTC ticks, 0 when unknown
     private readonly Dictionary<int, int[]> _buckets;
 
-    private FileIndex(string[] paths, string[] names, Dictionary<int, int[]> buckets)
+    private FileIndex(string[] paths, string[] names, long[] sizes, long[] mtimes,
+        Dictionary<int, int[]> buckets)
     {
         _paths = paths;
         _names = names;
+        _sizes = sizes;
+        _mtimes = mtimes;
         _buckets = buckets;
     }
 
@@ -20,15 +27,49 @@ public sealed class FileIndex
 
     public IReadOnlyList<string> Paths => _paths;
 
-    public static FileIndex Build(IEnumerable<string> paths)
+    public IReadOnlyList<long> Sizes => _sizes;
+
+    public IReadOnlyList<long> Mtimes => _mtimes;
+
+    public static FileIndex Build(IEnumerable<string> paths) =>
+        Build(paths.ToArray(), null, null);
+
+    // Direct build from cached metadata (no syscalls). Lengths must match.
+    public static FileIndex Build(IReadOnlyList<string> paths, long[] sizes, long[] mtimes)
     {
-        var pathArr = paths.ToArray();
+        if (sizes.Length != paths.Count || mtimes.Length != paths.Count)
+            throw new ArgumentException("metadata length must match path count");
+        return Build(paths.ToArray(), sizes, mtimes);
+    }
+
+    private static FileIndex Build(string[] pathArr, long[]? sizes, long[]? mtimes)
+    {
         var nameArr = new string[pathArr.Length];
+        var sizeArr = sizes ?? new long[pathArr.Length];
+        var timeArr = mtimes ?? new long[pathArr.Length];
         var tmp = new Dictionary<int, List<int>>();
         for (int i = 0; i < pathArr.Length; i++)
         {
             var name = ExtractName(pathArr[i]).ToLowerInvariant();
             nameArr[i] = name;
+            if (sizes == null)
+            {
+                // One stat per file at index time (never per keystroke):
+                // missing/unreadable files get unknown markers and are
+                // excluded whenever a size/date filter is active.
+                sizeArr[i] = -1;
+                timeArr[i] = 0;
+                if (File.Exists(pathArr[i]))
+                {
+                    try
+                    {
+                        var fi = new FileInfo(pathArr[i]);
+                        sizeArr[i] = fi.Length;
+                        timeArr[i] = fi.LastWriteTimeUtc.Ticks;
+                    }
+                    catch { }
+                }
+            }
             foreach (var bg in Bigrams(name))
             {
                 if (!tmp.TryGetValue(bg, out var list))
@@ -39,52 +80,67 @@ public sealed class FileIndex
         var buckets = new Dictionary<int, int[]>(tmp.Count);
         foreach (var kv in tmp)
             buckets[kv.Key] = kv.Value.ToArray();
-        return new FileIndex(pathArr, nameArr, buckets);
+        return new FileIndex(pathArr, nameArr, sizeArr, timeArr, buckets);
     }
 
     public List<string> Search(string query, int topN) =>
         Search(QueryParser.Parse(query), topN);
 
-    public List<string> Search(Query query, int topN)
+    public List<string> Search(Query query, int topN) =>
+        SearchDetailed(query, topN).Rows.Select(r => r.Path).ToList();
+
+    public (List<ResultRow> Rows, int Total) SearchDetailed(Query query, int topN) =>
+        SearchDetailed(query, topN, CancellationToken.None);
+
+    // Total = every match, not just the shown topN. Cancellation is
+    // cooperative: checked every 4096 candidates so a stale keystroke's
+    // full-index scan dies fast instead of burning CPU to completion.
+    public (List<ResultRow> Rows, int Total) SearchDetailed(
+        Query query, int topN, CancellationToken ct)
     {
-        var result = new List<string>();
+        var none = (new List<ResultRow>(), 0);
         if (topN <= 0)
-            return result;
+            return none;
         var q = query.Text.ToLowerInvariant();
         var terms = q.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (terms.Length == 0 && query.Extensions.Count == 0
             && query.Globs.Count == 0
             && query.MinSizeBytes == null && query.MaxSizeBytes == null
+            && query.SizeDisplayTarget == null
             && query.ModifiedAfterUtc == null && query.ModifiedBeforeUtc == null)
-            return result;
+            return none;
 
         int[] candidates = PickCandidates(terms, query);
         bool needFileInfo = query.MinSizeBytes != null || query.MaxSizeBytes != null
+            || query.SizeDisplayTarget != null
             || query.ModifiedAfterUtc != null || query.ModifiedBeforeUtc != null;
 
-        // Cheap filters first (no syscalls), then file filters over ALL
-        // survivors (one stat per file). A selective filter must never be
-        // truncated by an arbitrary examined-cap: every candidate is tested.
+        // Cheap filters first (no syscalls), then in-memory file filters
+        // over ALL survivors. No examined-cap: a selective filter must
+        // never silently drop matches past an arbitrary cutoff.
         var passed = new List<int>(Math.Min(candidates.Length, 4096));
-        foreach (var id in candidates)
+        for (int n = 0; n < candidates.Length; n++)
         {
+            if ((n & 4095) == 0)
+                ct.ThrowIfCancellationRequested();
+            int id = candidates[n];
             if (query.Extensions.Count > 0 && !MatchExt(_names[id], query.Extensions))
                 continue; // free: extension check needs no syscalls
             if (query.Globs.Count > 0 && !MatchAllGlobs(_names[id], query.Globs))
                 continue;
-            if (needFileInfo && !MatchFileFilters(_paths[id], query))
+            if (needFileInfo && !MatchFileFilters(id, query))
                 continue;
             passed.Add(id);
         }
 
-        var scored = new List<(int Score, int Idx)>(Math.Min(passed.Count, 4096));
+        var scored = new List<(int Score, int Idx)>(passed.Count);
         if (terms.Length == 0)
         {
-            foreach (var id in passed)
+            for (int n = 0; n < passed.Count; n++)
             {
-                scored.Add((GlobRank(_names[id], query), id));
-                if (scored.Count >= 20000)
-                    break;
+                if ((n & 4095) == 0)
+                    ct.ThrowIfCancellationRequested();
+                scored.Add((GlobRank(_names[passed[n]], query), passed[n]));
             }
         }
         else
@@ -92,8 +148,11 @@ public sealed class FileIndex
             // AND semantics: every term must match (by subsequence),
             // score is the sum. Single-term exact-name boost is
             // preserved inside Score().
-            foreach (var id in passed)
+            for (int n = 0; n < passed.Count; n++)
             {
+                if ((n & 4095) == 0)
+                    ct.ThrowIfCancellationRequested();
+                int id = passed[n];
                 int s = 0;
                 foreach (var term in terms)
                 {
@@ -110,23 +169,41 @@ public sealed class FileIndex
                 }
                 if (s >= 0)
                     scored.Add((s, id));
-                if (scored.Count >= 20000)
-                    break;
             }
         }
         scored.Sort((a, b) => b.Score.CompareTo(a.Score));
+        int total = scored.Count;
 
+        List<int> ordered;
         if (query.Sort == "rank")
         {
-            int n = Math.Min(topN, scored.Count);
-            for (int i = 0; i < n; i++)
-                result.Add(_paths[scored[i].Idx]);
-            return result;
+            ordered = scored.Take(topN).Select(t => t.Idx).ToList();
         }
-        foreach (var (_, id) in scored)
-            result.Add(_paths[id]);
-        var sorted = Sorter.Apply(result, query.Sort);
-        return sorted.Count > topN ? sorted.GetRange(0, topN) : sorted;
+        else if (query.Sort == "name")
+        {
+            var byPath = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var t in scored)
+                byPath[_paths[t.Idx]] = t.Idx;
+            ordered = Sorter.Apply(byPath.Keys.ToList(), "name")
+                .Take(topN)
+                .Select(p => byPath[p])
+                .ToList();
+        }
+        else if (query.Sort == "date")
+        {
+            // In-index timestamps: no syscalls, whole match set.
+            ordered = scored.OrderByDescending(t => _mtimes[t.Idx])
+                .Take(topN).Select(t => t.Idx).ToList();
+        }
+        else // size
+        {
+            ordered = scored.OrderByDescending(t => _sizes[t.Idx])
+                .Take(topN).Select(t => t.Idx).ToList();
+        }
+        var rows = ordered
+            .Select(id => new ResultRow(_paths[id], _sizes[id], _mtimes[id]))
+            .ToList();
+        return (rows, total);
     }
 
     private int[] PickCandidates(string[] terms, Query query)
@@ -195,22 +272,32 @@ public sealed class FileIndex
         return false;
     }
 
-    private static bool MatchFileFilters(string path, Query query)
+    // Pure in-memory comparison against index-time metadata: zero syscalls
+    // per keystroke. Unknown metadata (-1/0, file vanished after indexing)
+    // fails any active size/date constraint, like a stat failure used to.
+    private bool MatchFileFilters(int id, Query query)
     {
-        if (query.MinSizeBytes == null && query.MaxSizeBytes == null
-            && query.ModifiedAfterUtc == null && query.ModifiedBeforeUtc == null)
-            return true;
-        FileInfo fi;
-        try { fi = new FileInfo(path); }
-        catch { return false; }
-        long len;
-        DateTime wtime;
-        try { len = fi.Length; wtime = fi.LastWriteTimeUtc; }
-        catch { return false; }
-        if (query.MinSizeBytes != null && len < query.MinSizeBytes) return false;
-        if (query.MaxSizeBytes != null && len > query.MaxSizeBytes) return false;
-        if (query.ModifiedAfterUtc != null && wtime < query.ModifiedAfterUtc) return false;
-        if (query.ModifiedBeforeUtc != null && wtime > query.ModifiedBeforeUtc) return false;
+        long size = _sizes[id];
+        if (query.SizeDisplayTarget != null)
+        {
+            if (size < 0 || SizeFormat.FormatBytes(size, query.SizeDecimalUnits)
+                    != query.SizeDisplayTarget)
+                return false;
+        }
+        else
+        {
+            if (query.MinSizeBytes != null && (size < 0 || size < query.MinSizeBytes))
+                return false;
+            if (query.MaxSizeBytes != null && (size < 0 || size > query.MaxSizeBytes))
+                return false;
+        }
+        long ticks = _mtimes[id];
+        if (query.ModifiedAfterUtc != null
+            && (ticks == 0 || ticks < query.ModifiedAfterUtc.Value.Ticks))
+            return false;
+        if (query.ModifiedBeforeUtc != null
+            && (ticks == 0 || ticks > query.ModifiedBeforeUtc.Value.Ticks))
+            return false;
         return true;
     }
 

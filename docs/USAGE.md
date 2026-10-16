@@ -93,22 +93,42 @@ Checked **before** scoring and needs no filesystem access, so it is free.
 
 | Syntax | Meaning |
 |---|---|
-| `size:>10kb` | larger than 10 KB |
-| `size:<2mb` | smaller than 2 MB |
-| `size:500kb` | exactly 500 KB |
+| `size:>10kb` | larger than 10 KB (strict) |
+| `size:>=10kb` | 10 KB or larger |
+| `size:<2mb` | smaller than 2 MB (strict) |
+| `size:<=2mb` | 2 MB or smaller |
+| `size:=1mb` | exactly 1,048,576 bytes |
+| `size:1mb` | bare value: meaning follows Settings → Search → **Exact size** (default **Displayed size**, i.e. what Explorer shows) |
+| `size:1.5gb` | decimals allowed |
+| `size:1mb..5mb` | range, both ends inclusive, either order |
+| `size:>1 gb` | a bare-unit next token joins the value |
 
-Units: `b`, `kb` (1024), `mb` (1024²), `gb` (1024³). Case-insensitive.
-Stat calls are limited to the top-N candidates, so this never walks the disk.
+Units (case-insensitive): `b`, `k`/`kb`, `m`/`mb`, `g`/`gb`, `t`/`tb`.
+Binary (1 KB = 1024) by default; Decimal (1 KB = 1000) via Settings →
+Search → **Size units**. Sizes come from the index — filtering never
+touches the disk per keystroke.
 
 ### `dm:` — modified date
 
 | Syntax | Meaning |
 |---|---|
 | `dm:<7d` | modified **within** the last 7 days |
-| `dm:7d` | same as `<7d` |
+| `dm:7d` | same as `<7d`; bare digits mean days |
 | `dm:>30d` | modified **more than** 30 days ago |
+| `dm:<12h` | within the last 12 hours (`h`/`d`/`w`/`m`/`y` = hours/days/weeks/months/years) |
+| `dm:today` | modified today (local day by default) |
+| `dm:yesterday` | modified yesterday |
+| `dm:2024-05-10` | the whole day, 00:00 to next 00:00 (ISO only; local or UTC via Settings) |
+| `dm:>2024-05-01` | after that day; `<` before it; `>=`/`<=`/`=` also work |
+| `dm:2024-05-01..2024-05-31` | date range, inclusive |
 
-Days only; computed against UTC.
+### Invalid directives
+
+A token that looks like a directive but does not parse (`size:abc`,
+`dm:xyz`, bare `ext:`) is **not** searched as filename text — it could
+never match, since `:` is illegal in Windows filenames. Instead it glows
+**red** in the search box and the status line explains it
+(`size:abc — try size:>10mb`). Amber always means "understood".
 
 ### `path:` — match the full path
 
@@ -151,10 +171,14 @@ satisfying the filters is a candidate.
 
 - **★** marks an exact filename match; those rank first.
 - Matched characters glow **amber**.
-- Each row shows the filename (highlighted) and its full path (dimmed).
-- The status line shows live state: `starting.`, `checking for new files...`,
-  or `N files in X ms`.
-- The footer shows the total indexed file count.
+- Each row shows the filename (highlighted), the file **size** and its full
+  path (dimmed). With a `size:` filter active the size glows amber too.
+  Untick Settings → Search → **Show file size** to hide it.
+- Sorting (`rank` / `name` / `date` / `size`) runs over the whole match set,
+  not a truncated prefix — the biggest file really is first under size sort.
+- The status line shows live state, plus `N of M matches` when
+  **Show total match count** is on, or a `⚠` reason when a directive is
+  invalid.
 
 ## Settings
 
@@ -183,9 +207,16 @@ Open with the **Settings** button in the popup's bottom-right.
 
 | Setting | Notes |
 |---|---|
-| Max results | Rows rendered per query (default 50) |
+| Max results | Rows rendered per query, 10–1000 (default 50) |
 | Match path | Default on/off for `path:` behaviour |
-| Hide hidden/system files | Respect `FILE_ATTRIBUTE_HIDDEN` / `SYSTEM` |
+| Hide hidden/system files | Respect `FILE_ATTRIBUTE_HIDDEN` / `SYSTEM` — honoured at index time |
+| Exact size | What bare `size:1mb` means: **Displayed size** (Explorer-like, default), **Exact bytes**, or **±1%** |
+| Size units | **Binary** (1 KB = 1024) or **Decimal** (1 KB = 1000); affects parsing and display |
+| Absolute dates | Day boundaries in **Local** time (default) or **UTC** |
+| Show total matches | Status shows `50 of 312 matches` (default off) |
+| Show file size | Size badge on every result row (default on) |
+| Filter delay | Keystroke rest before directive queries run, 50–2000 ms (default 250; plain text stays 50) |
+| Log slow queries | Queries over 500 ms are written to `log.txt` (default off) |
 
 ### Index
 
@@ -195,6 +226,7 @@ Open with the **Settings** button in the popup's bottom-right.
 | Disks to ignore | Tick boxes for fixed drives |
 | Folders to ignore | **Validated full addresses** — rejects partial paths |
 | Extensions to ignore | Tick boxes populated from extensions present in *your* index |
+| Startup refresh | **Quick**: re-walk only changed top folders. **Deep**: full rebuild every start (catches deeply nested new files) |
 | Resync | Forces a full rebuild (normal restarts are incremental) |
 
 Ignored drives are honoured by `ResolveRoots()`, so a ticked drive never gets
