@@ -114,9 +114,14 @@ public sealed class IncrementalTests
             var deeper = Path.Combine(top, "new", "deeper");
             Directory.CreateDirectory(deeper);
             File.WriteAllText(Path.Combine(deeper, "fresh.txt"), "x");
-            WaitForMtimeChange(top, snap[top]);
 
-            var fresh = Incremental.Refresh(old, snap, new[] { root }, Array.Empty<string>());
+            // Windows can withhold a parent directory's mtime after a child
+            // directory is created (observed on the GitHub Windows runner).
+            // Use the engine's production recency guard instead of gambling on
+            // mtime publication: a just-captured snapshot re-scans recently
+            // modified directories.
+            var fresh = Incremental.Refresh(old, snap, new[] { root }, Array.Empty<string>(),
+                snapshotCapturedUtc: DateTime.UtcNow);
             Assert.Contains(fresh, f => f.EndsWith("fresh.txt"));
             Assert.Contains(fresh, f => f.EndsWith("keep.txt"));
         }
@@ -141,9 +146,12 @@ public sealed class IncrementalTests
             var old = Walker.Enumerate(root).ToList();
 
             Directory.Delete(gone, true);
-            WaitForMtimeChange(top, snap[top]);
 
-            var fresh = Incremental.Refresh(old, snap, new[] { root }, Array.Empty<string>());
+            // Same lazy-parent-mtime guard as the new-tree test: directory
+            // removal may not publish the parent's mtime promptly on CI
+            // runners; the production recency window forces the re-scan.
+            var fresh = Incremental.Refresh(old, snap, new[] { root }, Array.Empty<string>(),
+                snapshotCapturedUtc: DateTime.UtcNow);
             Assert.DoesNotContain(fresh, f => f.EndsWith("victim.txt"));
             Assert.Contains(fresh, f => f.EndsWith("keep.txt"));
         }
