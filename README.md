@@ -15,7 +15,7 @@ Windows Search service.
   queries across hundreds of thousands of indexed filenames
 - **Offline filename search** — no cloud, no network calls, no telemetry,
   no admin rights
-- **Lightweight** — ~240 KB app with zero third-party runtime dependencies
+- **Lightweight** — ~270 KB app with zero third-party runtime dependencies
 - **Open source** — MIT-licensed C#/.NET 8 code you can read, build and modify
 
 It searches **file names only, never file contents**. Windows 10 and
@@ -65,7 +65,7 @@ closed-source or paywalled. This project exists to answer one question with
 - **Offline & private** — zero network code. The app cannot phone home because
   it has no code that does.
 - **Non-admin** — no kernel driver, no NTFS MFT reads, no services.
-- **Small** — a ~240 KB app plus a single runtime prerequisite.
+- **Small** — a ~270 KB app plus a single runtime prerequisite.
 - **Honest** — every performance number below is reproducible from the README.
 
 ### How it compares

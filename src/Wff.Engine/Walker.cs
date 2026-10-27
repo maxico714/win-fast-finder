@@ -11,19 +11,27 @@ public static class Walker
         "$Recycle.Bin", "System Volume Information", "$Windows.~BT", "$Windows.~WS",
     };
 
-    public static IEnumerable<string> Enumerate(string root, IEnumerable<string>? blacklist = null,
-        bool skipHiddenSystem = true)
+    public static HashSet<string> BuildSkip(IEnumerable<string>? blacklist)
     {
         var skip = new HashSet<string>(DefaultSkip, StringComparer.OrdinalIgnoreCase);
         if (blacklist != null)
             foreach (var b in blacklist)
                 skip.Add(b);
+        return skip;
+    }
+
+    public static IEnumerable<string> Enumerate(string root, IEnumerable<string>? blacklist = null,
+        bool skipHiddenSystem = true, IDictionary<string, long>? dirTimes = null)
+    {
+        var skip = BuildSkip(blacklist);
 
         var stack = new Stack<string>();
         stack.Push(root);
         while (stack.Count > 0)
         {
             var dir = stack.Pop();
+            if (dirTimes != null)
+                dirTimes[dir] = DirTime(dir);
             IEnumerable<string> entries;
             try
             {
@@ -75,12 +83,10 @@ public static class Walker
     }
 
     public static List<string> EnumerateParallel(string root, IEnumerable<string>? blacklist = null,
-        IProgress<int>? progress = null, bool skipHiddenSystem = true)
+        IProgress<int>? progress = null, bool skipHiddenSystem = true,
+        IDictionary<string, long>? dirTimes = null)
     {
-        var skip = new HashSet<string>(DefaultSkip, StringComparer.OrdinalIgnoreCase);
-        if (blacklist != null)
-            foreach (var b in blacklist)
-                skip.Add(b);
+        var skip = BuildSkip(blacklist);
 
         var pending = new ConcurrentStack<string>();
         pending.Push(root);
@@ -101,7 +107,7 @@ public static class Walker
                         if (pending.TryPop(out var dir))
                         {
                             Interlocked.Increment(ref active);
-                            try { ScanDir(dir, skip, pending, files, progress, ref reported, skipHiddenSystem); }
+                            try { ScanDir(dir, skip, pending, files, progress, ref reported, skipHiddenSystem, dirTimes); }
                             finally { Interlocked.Decrement(ref active); }
                             spin.Reset();
                         }
@@ -129,8 +135,12 @@ public static class Walker
 
     private static void ScanDir(string dir, HashSet<string> skip,
         ConcurrentStack<string> pending, ConcurrentBag<string> files,
-        IProgress<int>? progress, ref int reported, bool skipHiddenSystem)
+        IProgress<int>? progress, ref int reported, bool skipHiddenSystem,
+        IDictionary<string, long>? dirTimes)
     {
+        if (dirTimes != null)
+            lock (dirTimes) dirTimes[dir] = DirTime(dir);
+
         IEnumerable<string> entries;
         try
         {
@@ -163,5 +173,11 @@ public static class Walker
                     progress?.Report(n);
             }
         }
+    }
+
+    internal static long DirTime(string dir)
+    {
+        try { return Directory.GetLastWriteTimeUtc(dir).Ticks; }
+        catch { return 0; }
     }
 }

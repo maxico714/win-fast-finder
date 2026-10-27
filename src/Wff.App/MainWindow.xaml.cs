@@ -165,7 +165,8 @@ public partial class MainWindow : Window
                         files = Incremental.Refresh(old, snap, roots, settings.Blacklist,
                             d => ShowStatus($"refreshing {d}…"), settings.HideHiddenAndSystem);
                         files = files.Where(f => ExtensionFilter.Keep(f, settings.IgnoredExtensions)).ToList();
-                        var newSnap = Incremental.SnapshotRoots(roots, settings.Blacklist);
+                        var newSnap = Incremental.SnapshotRoots(roots, settings.Blacklist,
+                            settings.HideHiddenAndSystem);
                         var index = FileIndex.Build(files);
                         try { Cache.Save(index, cachePath); SnapshotStore.Save(newSnap, snapPath); }
                         catch (Exception ex) { Logger.Info("cache save failed: " + ex.Message); }
@@ -186,7 +187,8 @@ public partial class MainWindow : Window
                     }
                 }
                 files = WalkAll(settings, count => ShowStatus($"indexing… {count:N0} files"));
-                var freshSnap = Incremental.SnapshotRoots(roots, settings.Blacklist);
+                var freshSnap = Incremental.SnapshotRoots(roots, settings.Blacklist,
+                    settings.HideHiddenAndSystem);
                 var freshIndex = FileIndex.Build(files);
                 try { Cache.Save(freshIndex, cachePath); SnapshotStore.Save(freshSnap, snapPath); }
                 catch (Exception ex) { Logger.Info("cache save failed: " + ex.Message); }

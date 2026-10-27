@@ -82,7 +82,7 @@ src/
   Wff.App/                   ← WPF popup, hotkeys, headless CLI
   Wff.Setup/                 ← installer wizard (UAC)
 tests/
-  Wff.Tests/                 ← 62 xunit tests
+  Wff.Tests/                 ← 207 xunit tests
   e2e/                       ← synthetic-keypress harness
 build/
   package.ps1                ← release packaging
