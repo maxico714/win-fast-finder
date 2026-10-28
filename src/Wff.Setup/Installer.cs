@@ -13,7 +13,7 @@ public static class Installer
     public const string AppName = "win-fast-finder";
     // Fallback only: the real version always comes from the assembly
     // (Directory.Build.props), so screens and registry never go stale.
-    public const string Version = "1.0.2";
+    public const string Version = "1.0.3";
 
     public static string AppVersion =>
         typeof(Installer).Assembly

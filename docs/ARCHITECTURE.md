@@ -3,7 +3,7 @@ title: Architecture - How Win Fast Finder Works
 description: How the shipped Win Fast Finder code is put together - file index, query engine, caching, privacy model and test ladder.
 permalink: /architecture.html
 ---
-# ARCHITECTURE — win-fast-finder v1.0.2
+# ARCHITECTURE — win-fast-finder v1.0.3
 
 How the shipped code is put together. Everything here describes what is
 actually in `src/`; see [BUILDING](BUILDING.md) to run it and

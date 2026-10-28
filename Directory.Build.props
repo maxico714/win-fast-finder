@@ -3,7 +3,7 @@
   <!-- Single source of truth for version + package metadata.
        Every project under src/ and tests/ inherits these. -->
   <PropertyGroup>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>Rehan Khan</Authors>
     <Company>Rehan Khan</Company>
     <Product>win-fast-finder</Product>

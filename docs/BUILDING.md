@@ -108,7 +108,7 @@ docs/
 
 1. Bump `<Version>` there.
 2. Add a section to [`CHANGELOG.md`](../CHANGELOG.md).
-3. Commit, tag `v<same version>` (for example `v1.0.2`), push the tag — CI
+3. Commit, tag `v<same version>` (for example `v1.0.3`), push the tag — CI
    builds and attaches artifacts.
 
 The release workflow and `build/package.ps1 -Tag vX.Y.Z` both fail before

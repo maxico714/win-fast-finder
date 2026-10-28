@@ -194,7 +194,7 @@ public partial class SettingsWindow : Window
     // ---- Advanced ----
     private void LoadAdvanced()
     {
-        string v = "1.0.2";
+        string v = "1.0.3";
         try
         {
             v = typeof(Settings).Assembly

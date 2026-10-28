@@ -41,7 +41,19 @@ licence.*
 | Install | UAC wizard, runtime-compatibility gate, validated dedicated app directory, Start Menu entry, Apps entry, silent uninstall |
 | Assurance | 239 mutation-verified tests, synthetic-keypress E2E, zero network code, adversarial input suite |
 
-## What v1.0.2 delivers (stable)
+## What v1.0.3 delivers (stable)
+
+Installer and release hardening on top of v1.0.2:
+
+| Area | Delivered |
+|---|---|
+| Installer safety | Dedicated `win-fast-finder` leaf required; drive/share roots, protected system/personal folders and shell-metacharacter paths rejected |
+| Uninstall safety | Recursive removal refused unless the folder is a real app directory (correct leaf, `Uninstall.exe` + `Wff.App.exe`, not a reparse point) |
+| Autostart | Opt-in only (`HKCU\…\Run` written only when the checkbox or `--autostart` is used); existing choices untouched by default |
+| Runtime | .NET 8-only gate rejects .NET 9+ runtimes; no `rollForward` |
+| Release | Workflow and packaging fail before building when the tag does not match `Directory.Build.props` |
+
+## What v1.0.2 delivered (stable)
 
 Everything v1.0.1 promised, finished to the documented spec:
 
