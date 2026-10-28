@@ -10,10 +10,12 @@ public static class RuntimeCheck
 
     public static bool Satisfies(IEnumerable<string> versions)
     {
+        // The app targets .NET 8 with no rollForward in its runtimeconfig.
+        // A 9+ runtime cannot run it, so a newer major is NOT acceptable.
         foreach (var v in versions)
         {
             var num = v.Split('-')[0].Split('.');
-            if (num.Length > 0 && int.TryParse(num[0], out int major) && major >= 8)
+            if (num.Length > 0 && int.TryParse(num[0], out int major) && major == 8)
                 return true;
         }
         return false;
@@ -62,8 +64,6 @@ public static class RuntimeCheck
             {
                 var t = line.Trim();
                 if (t.StartsWith("Microsoft.WindowsDesktop.App 8.", StringComparison.Ordinal))
-                    return true;
-                if (t.StartsWith("Microsoft.WindowsDesktop.App 9.", StringComparison.Ordinal))
                     return true;
             }
             return false;

@@ -414,7 +414,7 @@ footer{margin-top:80px;border-top:1px solid var(--line);background:var(--bg2)}
       <div class="stats" aria-label="Project statistics">
         <div class="stat"><b>~240 KB</b><span>tiny app, zero third-party runtime deps</span></div>
         <div class="stat"><b>~6 ms</b><span>typical query over 274k files</span></div>
-        <div class="stat"><b>207 / 207</b><span>automated tests passing</span></div>
+        <div class="stat"><b>239 / 239</b><span>automated tests passing</span></div>
         <div class="stat"><b>MIT</b><span>read, build &amp; modify freely</span></div>
       </div>
     </div>
@@ -544,7 +544,7 @@ footer{margin-top:80px;border-top:1px solid var(--line);background:var(--bg2)}
   <ol class="steps reveal">
     <li><b>Download the installer</b><p><code>win-fast-finder-Setup-1.0.2.exe</code> from <a href="https://github.com/maxico714/win-fast-finder/releases">GitHub Releases</a>.</p></li>
     <li><b>Verify the checksum</b><p>Run <code>Get-FileHash .\win-fast-finder-Setup-1.0.2.exe -Algorithm SHA256</code> and compare against the <code>.sha256</code> file on the release page.</p></li>
-    <li><b>Run it</b><p>It elevates <strong>once</strong> (default <code>C:\Program Files</code>), checks for the .NET 8 Desktop Runtime <em>before copying anything</em>, then adds a Start Menu entry and optional autostart.</p></li>
+    <li><b>Run it</b><p>It elevates <strong>once</strong> (default <code>C:\Program Files\win-fast-finder</code>), checks for the .NET 8 Desktop Runtime <em>before copying anything</em>, then adds a Start Menu entry. Autostart is opt-in and off by default.</p></li>
     <li><b>Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> and type</b><p>First run indexes your user profile. Add more roots in Settings for full-drive search.</p></li>
   </ol>
   <div class="chips reveal" aria-label="System requirements">
@@ -566,7 +566,7 @@ footer{margin-top:80px;border-top:1px solid var(--line);background:var(--bg2)}
   <div class="cards">
     <article class="card reveal">
       <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg></div>
-      <h3>207 / 207 tests green</h3>
+      <h3>239 / 239 tests green</h3>
       <p>Unit, integration and end-to-end tests — including a real-harness proof that drives the GUI with synthetic <code>SendInput</code> keypresses. New behaviour needs a failing-first test.</p>
     </article>
     <article class="card reveal">

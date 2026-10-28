@@ -16,7 +16,7 @@ Core value is shipped and proven, filters finished to the documented spec:
 - Borderless popup, System/Light/Dark themes, amber/cyan/red highlighting,
   autocomplete with index-backed values
 - Full settings surface, compat-gated UAC installer, silent uninstall
-- 207 mutation-verified tests + synthetic-keypress E2E
+- 239 mutation-verified tests + synthetic-keypress E2E
 - Zero network code, zero third-party runtime dependencies
 
 ## Next — v1.1.x (stability and polish)

@@ -53,7 +53,7 @@ public partial class App : System.Windows.Application
                     return;
                 }
                 Installer.InstallTo(silentDir, Installer.ReadPayload(Environment.ProcessPath!),
-                    m => Console.WriteLine(m));
+                    m => Console.WriteLine(m), enableAutostart: args.Contains("--autostart"));
                 Shutdown(0);
             }
             catch (Exception ex)

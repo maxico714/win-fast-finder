@@ -26,7 +26,7 @@ dotnet build Wff.sln --no-incremental
 dotnet test tests/Wff.Tests/Wff.Tests.csproj --no-build
 ```
 
-You should see **0 warnings, 0 errors** and **62 passed**. If you don't, fix
+You should see **0 warnings, 0 errors** and **239 passed**. If you don't, fix
 that before changing anything — you want a known-good baseline.
 
 Full details in [docs/BUILDING.md](docs/BUILDING.md).
@@ -39,7 +39,7 @@ Every behavioural change follows the same loop:
 2. **Make it pass** with the smallest change that works.
 3. **Mutation-verify.** Deliberately break the new code path (flip a
    comparison, delete a guard) and confirm the test fails again.
-4. **Restore** the code and confirm 207/207.
+4. **Restore** the code and confirm 239/239.
 
 Step 3 is the part people skip, and it is the part that catches tests which
 pass for the wrong reason. A test that cannot fail is not a test.

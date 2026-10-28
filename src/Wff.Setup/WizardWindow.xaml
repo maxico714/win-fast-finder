@@ -12,7 +12,7 @@
         <StackPanel x:Name="PageWelcome" Grid.Row="0" VerticalAlignment="Center">
             <TextBlock x:Name="WelcomeTitle" Text="win-fast-finder" FontSize="24" FontWeight="Bold"/>
             <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Opacity="0.75"
-                       Text="Instant offline filename search for Windows. This wizard installs the app, adds a Start Menu shortcut, registers it for clean uninstall, and enables launch at login (you can opt out later in Settings)."/>
+                       Text="Instant offline filename search for Windows. This wizard installs the app, adds a Start Menu shortcut, registers it for clean uninstall, and can optionally start it when you sign in."/>
         </StackPanel>
 
         <DockPanel x:Name="PageLicense" Grid.Row="0" Visibility="Collapsed">
@@ -24,12 +24,15 @@
 
         <StackPanel x:Name="PageDirectory" Grid.Row="0" Visibility="Collapsed" VerticalAlignment="Center">
             <TextBlock Text="Where should it live?" FontSize="18" FontWeight="Bold"/>
-            <TextBlock Margin="0,4,0,0" Opacity="0.75" Text="Default is Program Files. Pick any folder — it will be created."/>
+            <TextBlock Margin="0,4,0,0" Opacity="0.75" TextWrapping="Wrap"
+                       Text="The folder must be named win-fast-finder. The default is Program Files; it will be created if needed."/>
             <DockPanel Margin="0,10,0,0">
                 <Button Content="Browse…" Click="Browse_Click" Padding="12,2" DockPanel.Dock="Right" Margin="8,0,0,0"/>
                 <TextBox x:Name="DirBox" Padding="4" TextChanged="DirBox_Changed"/>
             </DockPanel>
             <TextBlock x:Name="DirError" Foreground="Red" Visibility="Collapsed" Margin="0,4,0,0"/>
+            <CheckBox x:Name="AutostartBox" Margin="0,10,0,0"
+                      Content="Start win-fast-finder when I sign in (optional)"/>
             <!-- Compatibility gate: Install stays disabled until the PC
                  passes OS + runtime checks. -->
             <TextBlock x:Name="CompatError" Foreground="Red" Visibility="Collapsed"

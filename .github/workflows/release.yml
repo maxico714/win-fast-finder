@@ -23,6 +23,19 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Verify tag matches Directory.Build.props
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart('v')
+          $props = Get-Content Directory.Build.props -Raw
+          $m = [regex]::Match($props, '<Version>([^<]+)</Version>')
+          if (-not $m.Success) { throw "Could not read <Version> from Directory.Build.props" }
+          $version = $m.Groups[1].Value.Trim()
+          if ($tag -ne $version) {
+            throw "Tag v$tag does not match <Version>$version</Version> in Directory.Build.props"
+          }
+          Write-Host "Tag v$tag matches Directory.Build.props version $version"
+
       - name: Build
         run: dotnet build Wff.sln --no-incremental --configuration Release
 
@@ -31,7 +44,7 @@ jobs:
 
       - name: Package
         shell: powershell
-        run: .\build\package.ps1 -SkipBuild -SkipTests
+        run: .\build\package.ps1 -SkipBuild -SkipTests -Tag "${{ github.ref_name }}"
 
       - name: Read changelog section
         id: changelog

@@ -34,7 +34,7 @@ mistake stale output for a clean build. Omit it during rapid iteration.
 dotnet test tests/Wff.Tests/Wff.Tests.csproj --no-build
 ```
 
-Expected: **62 passed, 0 failed.**
+Expected: **239 passed, 0 failed.**
 
 Use `--no-build` after a successful build; without it `dotnet test` may
 rebuild and interleave output.
@@ -55,6 +55,19 @@ dotnet run --project src/Wff.App -- --index "C:\Some\Folder" --query "report"
 
 For the GUI, press **Ctrl+Shift+F** to summon. See
 [USAGE](USAGE.md) for the full feature set.
+
+### Silent install
+
+The installer stub accepts a headless install path:
+
+```powershell
+.\WffSetup.exe --install-to "C:\Program Files\win-fast-finder"
+```
+
+Autostart is opt-in and stays off unless you add `--autostart`. The chosen
+folder must be named `win-fast-finder`; the same validation as the wizard
+rejects drive roots, protected system/personal folders and shell
+metacharacters.
 
 ### Proving the hotkey works
 
@@ -82,7 +95,7 @@ src/
   Wff.App/                   ← WPF popup, hotkeys, headless CLI
   Wff.Setup/                 ← installer wizard (UAC)
 tests/
-  Wff.Tests/                 ← 207 xunit tests
+  Wff.Tests/                 ← 239 xunit tests
   e2e/                       ← synthetic-keypress harness
 build/
   package.ps1                ← release packaging
@@ -95,7 +108,12 @@ docs/
 
 1. Bump `<Version>` there.
 2. Add a section to [`CHANGELOG.md`](../CHANGELOG.md).
-3. Commit, tag `v1.0.2`, push the tag — CI builds and attaches artifacts.
+3. Commit, tag `v<same version>` (for example `v1.0.2`), push the tag — CI
+   builds and attaches artifacts.
+
+The release workflow and `build/package.ps1 -Tag vX.Y.Z` both fail before
+building if the tag version does not exactly match `<Version>` in
+`Directory.Build.props`.
 
 Individual `.csproj` files deliberately carry **no** `<Version>` element; do
 not add one back.
@@ -109,7 +127,7 @@ not add one back.
 This runs, in order:
 
 1. `dotnet build Wff.sln --no-incremental` (must be 0 errors)
-2. `dotnet test --no-build` (must be 207/207)
+2. `dotnet test --no-build` (must be 239/239)
 3. Publish `Wff.App` framework-dependent, single-file → `dist\win-fx`
 4. Publish `Wff.Setup` framework-dependent → `dist\setup-fx`
 5. Assemble `payload-slim.zip` (app exe + LICENSE)

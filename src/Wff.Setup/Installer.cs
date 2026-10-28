@@ -27,6 +27,9 @@ public static class Installer
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), AppName);
 
     // Returns error text, or null when the directory is acceptable.
+    // InstallTo and UninstallAll both assume this contract: the leaf must be
+    // AppName, outside protected locations, and free of cmd.exe metacharacters
+    // (the path is later embedded in SelfDelete's `cmd /c` line).
     public static string? ValidateDirectory(string dir)
     {
         if (string.IsNullOrWhiteSpace(dir))
@@ -35,19 +38,82 @@ public static class Installer
         if (!Path.IsPathRooted(dir.Trim()))
             return "Use a full path like C:\\Program Files\\win-fast-finder.";
         string full;
-        try { full = Path.GetFullPath(dir); }
+        try { full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dir.Trim())); }
         catch { return "That is not a valid path."; }
+        if (full.Length > 200)
+            return "Path is too long (200 characters max).";
+        if (HasUnsafeShellChars(full))
+            return "Path contains characters the installer cannot handle safely " +
+                "(& | < > ^ % \" ! ( ) * ?).";
         string win = Environment.GetFolderPath(Environment.SpecialFolder.Windows).TrimEnd('\\');
         if (full.Equals(win, StringComparison.OrdinalIgnoreCase)
             || full.StartsWith(win + "\\", StringComparison.OrdinalIgnoreCase))
             return "Cannot install inside the Windows folder.";
-        if (full.Length > 200)
-            return "Path is too long (200 characters max).";
+        // A drive root (or UNC share root) is never a dedicated app folder.
+        string root = Path.TrimEndingDirectorySeparator(Path.GetPathRoot(full) ?? "");
+        if (root.Length > 0 && full.Equals(root, StringComparison.OrdinalIgnoreCase))
+            return "Cannot install to a drive or share root. Use a dedicated app folder.";
+        foreach (var protectedPath in ProtectedPaths())
+        {
+            if (string.IsNullOrWhiteSpace(protectedPath))
+                continue;
+            string p;
+            try { p = Path.TrimEndingDirectorySeparator(Path.GetFullPath(protectedPath)); }
+            catch { continue; }
+            if (p.Length > 0 && full.Equals(p, StringComparison.OrdinalIgnoreCase))
+                return "Choose a dedicated app folder, not a system or personal folder.";
+        }
+        // UninstallAll recursively deletes this directory: require an app-owned leaf.
+        string leaf = Path.GetFileName(Path.TrimEndingDirectorySeparator(full));
+        if (!leaf.Equals(AppName, StringComparison.OrdinalIgnoreCase))
+            return $"The install folder must be named \"{AppName}\", " +
+                $"for example C:\\Program Files\\{AppName}.";
         return null;
     }
 
-    public static void InstallTo(string dir, byte[] payload, Action<string>? log = null)
+    private static IEnumerable<string> ProtectedPaths()
     {
+        yield return Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        yield return Environment.GetFolderPath(Environment.SpecialFolder.System);
+        yield return Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        yield return Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+        yield return Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+        string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        yield return profile;
+        if (profile.Length > 0)
+        {
+            string? users = Path.GetDirectoryName(profile);
+            if (!string.IsNullOrEmpty(users))
+                yield return users;
+            yield return Path.Combine(profile, "Downloads");
+        }
+        yield return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        yield return Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+        yield return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+    }
+
+    private static bool HasUnsafeShellChars(string path)
+    {
+        foreach (char c in path)
+        {
+            if (c < 0x20 || c == 0x7f)
+                return true;
+            if (c is '&' or '|' or '<' or '>' or '^' or '%' or '"' or '!' or '(' or ')' or '*' or '?')
+                return true;
+        }
+        return false;
+    }
+
+    public static void InstallTo(
+        string dir, byte[] payload, Action<string>? log = null, bool enableAutostart = false)
+    {
+        // Defence in depth: the wizard and silent path validate first, but a
+        // direct caller must not be able to install into a drive root or an
+        // arbitrary existing folder that UninstallAll would later delete.
+        var invalid = ValidateDirectory(dir);
+        if (invalid != null)
+            throw new ArgumentException(invalid, nameof(dir));
+        dir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dir.Trim()));
         Directory.CreateDirectory(dir);
         log?.Invoke("Extracting files…");
         using (var zip = new ZipArchive(new MemoryStream(payload), ZipArchiveMode.Read))
@@ -73,15 +139,51 @@ public static class Installer
             key?.SetValue("NoModify", 1);
             key?.SetValue("NoRepair", 1);
         }
-        // Autostart (opt-out lives in app Settings).
-        using (var key = Registry.CurrentUser.CreateSubKey(RunKey))
+        // Autostart is opt-in (README / PRIVACY): only write the Run value when
+        // the caller explicitly asked, otherwise leave an existing choice alone.
+        if (enableAutostart)
+        {
+            using var key = Registry.CurrentUser.CreateSubKey(RunKey);
             key?.SetValue(RunValue, $"\"{Path.Combine(dir, "Wff.App.exe")}\" --tray");
+        }
         log?.Invoke("Done.");
+    }
+
+    // True only for an installed app directory: correct leaf AND the two
+    // executables this product puts there. UninstallAll refuses otherwise so
+    // a renamed/relocated stub can never recursively erase an arbitrary folder.
+    public static bool IsSafeUninstallDirectory(string dir)
+    {
+        if (string.IsNullOrWhiteSpace(dir))
+            return false;
+        string full;
+        try { full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dir)); }
+        catch { return false; }
+        if (!Path.GetFileName(full).Equals(AppName, StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (HasUnsafeShellChars(full))
+            return false;
+        try
+        {
+            var attrs = File.GetAttributes(full);
+            if (attrs.HasFlag(FileAttributes.ReparsePoint))
+                return false;
+            return File.Exists(Path.Combine(full, "Uninstall.exe"))
+                && File.Exists(Path.Combine(full, "Wff.App.exe"));
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public static void UninstallAll()
     {
         string ownDir = Path.GetDirectoryName(Environment.ProcessPath!)!;
+        if (!IsSafeUninstallDirectory(ownDir))
+            throw new InvalidOperationException(
+                $"Refusing to uninstall from \"{ownDir}\": expected a folder named " +
+                $"\"{AppName}\" containing Uninstall.exe and Wff.App.exe.");
         foreach (var p in Process.GetProcessesByName("Wff.App"))
         {
             try { p.Kill(); } catch { }

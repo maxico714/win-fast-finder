@@ -171,7 +171,13 @@ public partial class WizardWindow : Window
             ShowNewFolderButton = true,
         };
         if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            DirBox.Text = Path.Combine(dlg.SelectedPath, "win-fast-finder");
+        {
+            string picked = dlg.SelectedPath.TrimEnd('\\');
+            DirBox.Text = Path.GetFileName(picked).Equals(
+                Installer.AppName, StringComparison.OrdinalIgnoreCase)
+                ? picked
+                : Path.Combine(picked, Installer.AppName);
+        }
     }
 
     private void StartInstall()
@@ -184,7 +190,8 @@ public partial class WizardWindow : Window
             {
                 byte[] payload = Installer.ReadPayload(Environment.ProcessPath!);
                 Installer.InstallTo(dir, payload, m =>
-                    Dispatcher.BeginInvoke(() => ProgressLog.Items.Add(m)));
+                    Dispatcher.BeginInvoke(() => ProgressLog.Items.Add(m)),
+                    enableAutostart: AutostartBox.IsChecked == true);
                 Dispatcher.BeginInvoke(() =>
                 {
                     FinishText.Text = "Installed. Press Ctrl+Shift+F anywhere to search.";

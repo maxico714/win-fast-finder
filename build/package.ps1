@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Reproducible release packaging for win-fast-finder.
+  Release packaging for win-fast-finder.
 
 .DESCRIPTION
   Runs the exact pipeline used to produce the published installer:
@@ -28,7 +28,8 @@
 [CmdletBinding()]
 param(
     [switch]$SkipTests,
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    [string]$Tag = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -48,6 +49,17 @@ $props = Join-Path $root 'Directory.Build.props'
 $version = ([regex]::Match((Get-Content $props -Raw), '<Version>([^<]+)</Version>')).Groups[1].Value
 if (-not $version) { throw "Could not read <Version> from Directory.Build.props" }
 Write-Host "version: $version" -ForegroundColor Green
+
+# A release tag must name exactly the version we are about to package.
+# Refuse before build/test/publish so a mismatched tag cannot ship artifacts.
+if ($Tag) {
+    $tagVersion = $Tag.Trim()
+    if ($tagVersion.StartsWith('v')) { $tagVersion = $tagVersion.Substring(1) }
+    if ($tagVersion -ne $version) {
+        throw "Tag '$Tag' does not match <Version>$version</Version> in Directory.Build.props"
+    }
+    Write-Host "tag:     $Tag (matches)" -ForegroundColor Green
+}
 
 # --- 1 & 2: build + test ----------------------------------------------------
 if (-not $SkipBuild) {

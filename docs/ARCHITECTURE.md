@@ -42,7 +42,7 @@ Three projects, one solution:
 | `src/Wff.Engine` | Class library | Index, search, walk, cache, settings, parsing. **No UI, no WPF** — everything unit-testable. |
 | `src/Wff.App` | WPF `WinExe` + headless CLI | Popup, hotkeys, theme, settings window, `--index`/`--query` mode. |
 | `src/Wff.Setup` | WPF `WinExe` (UAC) | Install/uninstall wizard and silent flags; funnels through `Installer`. |
-| `tests/Wff.Tests` | xunit | 207 tests over Engine + App + Setup. |
+| `tests/Wff.Tests` | xunit | 239 tests over Engine + App + Setup. |
 
 ## Engine internals
 
@@ -189,7 +189,7 @@ allocates little and touches no syscalls during scoring.
 | Level | What | Where |
 |---|---|---|
 | L0 | Compiles with 0 warnings / 0 errors | `dotnet build Wff.sln --no-incremental` |
-| L1 | Unit tests, mutation-verified (red → green → flip the code → must fail) | `tests/Wff.Tests/*.cs` (207 tests) |
+| L1 | Unit tests, mutation-verified (red → green → flip the code → must fail) | `tests/Wff.Tests/*.cs` (239 tests) |
 | L2 | Real filesystem temp dirs, real walkers, real cache round-trip | `WalkerTests`, `CacheTests`, `IncrementalTests` |
 | L3 | Journeys: headless index+query, installer validation, wizard rules | `StartupTests`, `WizardValidationTests` |
 | L4 | Fresh clone, README commands run literally | see [BUILDING](BUILDING.md) |

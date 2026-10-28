@@ -162,9 +162,10 @@ default handler for that extension in Windows Settings → Apps → Default apps
 Open an issue with:
 
 1. Windows version (`winver`)
-2. Whether you installed the release or built from source
-3. The **complete** `log.txt` from `%APPDATA%\win-fast-finder\`
-4. What you expected, and what happened instead
+2. Running version (Settings → Advanced)
+3. Whether you installed the release or built from source
+4. The **complete** `log.txt` from `%APPDATA%\win-fast-finder\`
+5. What you expected, and what happened instead
 
 If the app cannot start at all, attach `%TEMP%` crash information if present.
 

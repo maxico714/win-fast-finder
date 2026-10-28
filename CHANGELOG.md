@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+- Installer path validation now requires a dedicated `win-fast-finder`
+  leaf folder, rejects drive/share roots, protected system and personal
+  folders, and paths containing cmd.exe metacharacters. `UninstallAll`
+  additionally refuses recursive deletion unless the folder is named
+  `win-fast-finder` and contains both `Uninstall.exe` and `Wff.App.exe`.
+- Autostart is opt-in: the installer only writes the `HKCU\…\Run` value
+  when the new checkbox (or `--autostart` in silent mode) is used.
+
+### Fixed
+- The compatibility gate now rejects .NET 9+ runtimes; the app targets
+  .NET 8 with no `rollForward`.
+- Release workflow and `build/package.ps1 -Tag` fail when the git tag does
+  not match `<Version>` in `Directory.Build.props`.
+
 ## [1.0.2] - 2026-10-16
 
 ### Added
@@ -56,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   contributing/security/support guides.
 - `tests/e2e/Invoke-WffE2E.ps1` — synthetic-keypress harness proving
   Ctrl+Shift+F summons a visible window.
-- `build/package.ps1` — reproducible release packaging (build → test →
+- `build/package.ps1` — release packaging (build → test →
   publish → assemble installer → checksum → source zip).
 - `Directory.Build.props` — centralised version, authors and repository
   metadata.
@@ -100,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Production settings window (General / Hotkeys / Search / Index /
   Advanced): custom hotkeys, fullscreen-ignore, max results, path matching,
   rank/name/date/size sort, hidden & system toggle, theme System/Light/Dark,
-  launch-at-login (HKCU, opt-out), export/import/reset, data folder, log
+  launch-at-login (HKCU, opt-in), export/import/reset, data folder, log
   viewer, index stats.
 - Smart ignore UI: drives as tick-boxes, folder add validates the full
   address, extensions as tick-boxes populated from indexed files.

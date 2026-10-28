@@ -114,9 +114,11 @@ a download link if it is missing.
     Get-FileHash .\win-fast-finder-Setup-1.0.2.exe -Algorithm SHA256
    ```
    Compare against the `.sha256` file on the release page.
-3. Run the installer. It elevates **once** (default `C:\Program Files`),
-   checks the .NET runtime, installs, registers a Start Menu entry and an
-   optional autostart item, and can launch the app immediately.
+3. Run the installer. It elevates **once** (default
+   `C:\Program Files\win-fast-finder`), checks the .NET runtime, installs,
+   and registers a Start Menu entry. Autostart is **opt-in**: tick the
+   checkbox on the folder page to start the app when you sign in; it is off
+   by default. The installer can also launch the app immediately.
 4. Press **Ctrl+Shift+F** and type.
 
 > **SmartScreen / Defender note:** this installer is **not code-signed**
@@ -205,16 +207,24 @@ elevated window (UIPI). The main hotkey is unaffected.
 
 Open with the **Settings** button in the popup.
 
-- **General** — theme (System / Light / Dark), launch at login (HKCU, opt-out),
+- **General** — theme (System / Light / Dark), launch at login
+  (HKCU, opt-in: the installer leaves it off unless you tick the box),
   data folder, log viewer, index stats, export / import / reset.
 - **Hotkeys** — main hotkey string, Ctrl double-tap on/off, ignore-while-fullscreen.
 - **Search** — max results, path matching, hidden/system file toggle.
 - **Index** — roots to index, drives to ignore (tick boxes), folders to ignore
   (validated full address), extensions to ignore (tick boxes populated from
   *your own* indexed files), Resync (force full rebuild).
-- **Advanced** — everything else, including the log.
+- **Advanced** — exports, reset, data folder, log viewer and the version/About
+  line.
 
 Resync happens incrementally on every restart; **Resync** forces a full rebuild.
+
+**About / version:** there is no Help → About menu. Open **Settings →
+Advanced**; the version line at the bottom shows the running build. That
+version comes from `<Version>` in
+[`Directory.Build.props`](Directory.Build.props), baked into the assembly at
+build time — the wizard and the uninstall registry entry read the same value.
 
 ## Performance
 
@@ -251,9 +261,12 @@ What *does* touch your disk:
 | Where | What |
 |---|---|
 | `%APPDATA%\win-fast-finder\` | settings.json, binary index cache, log.txt |
+| `C:\Program Files\win-fast-finder\` (or your chosen app folder) | Installed binaries and `Uninstall.exe` |
 
-Delete that folder and every trace is gone. Full statement:
-[docs/PRIVACY.md](docs/PRIVACY.md).
+Delete that folder and every trace in your profile is gone. Uninstall also
+removes the app folder. If you opted into **Launch at login**, a single
+`HKCU\…\Run` value named `win-fast-finder` exists until you untick it.
+Full statement: [docs/PRIVACY.md](docs/PRIVACY.md).
 
 The default index skips `AppData`, `node_modules`, `.git`, `obj`, `bin` and
 `.vs`, and you can add your own folders to the blacklist.
@@ -274,7 +287,7 @@ Full guide: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ```sh
 dotnet build Wff.sln --no-incremental
-dotnet test tests/Wff.Tests/Wff.Tests.csproj     # 207 tests
+dotnet test tests/Wff.Tests/Wff.Tests.csproj     # 239 tests
 dotnet run --project src/Wff.App                  # GUI
 dotnet run --project src/Wff.App -- --index "C:\Dir" --query "name"
 ```

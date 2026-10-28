@@ -204,7 +204,7 @@ Open with the **Settings** button in the popup's bottom-right.
 | Setting | Notes |
 |---|---|
 | Theme | `System` follows Windows; `Light` / `Dark` override |
-| Launch at login | Writes a `HKCU\…\Run` entry — **no admin needed**. Untick to opt out |
+| Launch at login | **Opt-in** — off unless enabled here or ticked in the installer. Writes a `HKCU\…\Run` entry; **no admin needed**. Untick to remove it |
 | Data folder | Where settings/cache/log live (`%APPDATA%\win-fast-finder` by default) |
 | Log viewer | Opens `log.txt` — the first place to look when something misbehaves |
 | Index stats | Indexed file count, cache age, root list |
@@ -246,6 +246,13 @@ Open with the **Settings** button in the popup's bottom-right.
 
 Ignored drives are honoured by `ResolveRoots()`, so a ticked drive never gets
 walked at all.
+
+### Advanced and About
+
+There is no separate Help → About dialog. **Settings → Advanced** shows the
+running version at the bottom (`win-fast-finder <version> — MIT`). The value
+comes from `<Version>` in `Directory.Build.props` through the assembly, the
+same source the installer writes to the uninstall registry entry.
 
 ## Headless mode
 

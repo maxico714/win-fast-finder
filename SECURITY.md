@@ -15,7 +15,7 @@ Include, where possible:
 
 - A description of the issue and its impact
 - Steps to reproduce, or a proof of concept
-- Affected version (see **Help → About**, or the release tag)
+- Affected version (see **Settings → Advanced**, or the release tag)
 - Any suggested fix
 
 You will get a response within a few days. If the issue is confirmed, a fix

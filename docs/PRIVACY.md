@@ -49,10 +49,13 @@ The log records which roots were indexed and how many files they contain.
 
 ## What it writes to
 
-Nothing outside `%APPDATA%\win-fast-finder\` and, if you installed it,
-`C:\Program Files\win-fast-finder\` (the binaries) plus a Start Menu shortcut.
-Launch-at-login, if you enable it, adds a single `HKCU\…\Run` registry value
-named for this app — removable by unticking the setting or deleting the entry.
+Nothing outside `%APPDATA%\win-fast-finder\` and, if you installed it, the
+app folder you chose (`C:\Program Files\win-fast-finder\` by default) which
+holds the binaries and `Uninstall.exe`, plus a Start Menu shortcut.
+Launch-at-login is **opt-in**: it is off unless you tick the installer
+checkbox (or pass `--autostart` in a silent install) or enable it later in
+Settings. When enabled, it adds a single `HKCU\…\Run` registry value named
+for this app — removable by unticking the setting or deleting the entry.
 
 The application **never** writes to `HKEY_LOCAL_MACHINE`, never installs a
 service, and never loads a kernel driver.

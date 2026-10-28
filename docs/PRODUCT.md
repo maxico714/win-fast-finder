@@ -37,9 +37,9 @@ licence.*
 | Search | Subsequence fuzzy matching, `*`/`?` globs, `ext:`, `size:`, `dm:`, `path:` filters, exact-match boost with ★ ranking |
 | Hotkeys | Configurable main hotkey via `RegisterHotKey` (default `Ctrl+Shift+F`), optional Ctrl double-tap hook, fullscreen guard |
 | UI | Borderless upper-centre popup, System/Light/Dark themes, amber match highlighting, Tab directive completion, dismiss on Esc/outside-click |
-| Settings | Roots, ignored drives/folders/extensions, max results, sort mode, hidden-file toggle, launch-at-login (HKCU, opt-out), export/import/reset, log viewer, index stats |
-| Install | UAC wizard, runtime-compatibility gate, validated install directory, Start Menu entry, Apps entry, silent uninstall |
-| Assurance | 62 mutation-verified tests, synthetic-keypress E2E, zero network code, adversarial input suite |
+| Settings | Roots, ignored drives/folders/extensions, max results, sort mode, hidden-file toggle, launch-at-login (HKCU, opt-in), export/import/reset, log viewer, index stats |
+| Install | UAC wizard, runtime-compatibility gate, validated dedicated app directory, Start Menu entry, Apps entry, silent uninstall |
+| Assurance | 239 mutation-verified tests, synthetic-keypress E2E, zero network code, adversarial input suite |
 
 ## What v1.0.2 delivers (stable)
 
